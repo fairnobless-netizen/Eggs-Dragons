@@ -150,23 +150,14 @@ export const FullOverlay: React.FC<FullOverlayProps> = ({ isFull, toggleFull, on
   }
 
 
-    // Button styles (size is controlled by CSS .red-btn)
+    // Button styles: size is controlled by CSS (.red-btn)
     const btnStyle = (id: ControlId): React.CSSProperties => {
-        if (isPhone) {
-            return {
-                position: 'absolute',
-                pointerEvents: 'auto',
-                zIndex: 900,
-                transform: 'translate(-50%, -50%)',
-                left: `${layout[id]?.x * 100}%`,
-                top: `${layout[id]?.y * 100}%`,
-            };
-        }
+        const zIndex = isPhone ? 900 : 100;
 
         return {
             position: 'absolute',
             pointerEvents: 'auto',
-            zIndex: 100,
+            zIndex,
             transform: 'translate(-50%, -50%)',
             left: `${layout[id]?.x * 100}%`,
             top: `${layout[id]?.y * 100}%`,
