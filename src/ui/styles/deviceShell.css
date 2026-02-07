@@ -121,9 +121,9 @@ canvas {
     position: absolute;
     width: 80px;
     height: 80px;
-    /* PAW BUTTON */
-    background-color: transparent;
-    background-image: url('./pad_paw.png');
+    /* PAW IMAGE (served from /public) */
+    background: transparent;
+    background-image: url('/ui/layer/pad_paw.png');
     background-repeat: no-repeat;
     background-position: center;
     background-size: contain;
@@ -135,10 +135,8 @@ canvas {
     display: flex;
     align-items: center;
     justify-content: center;
-    transform: translateZ(0);
     -webkit-tap-highlight-color: transparent;
 }
-
 
 
     .red-btn:active {
@@ -154,8 +152,12 @@ canvas {
 .right-bot { right: 1%; bottom: 2%; }
 
 @media (max-width: 640px) {
-  .red-btn { width: 64px; height: 64px; border-width: 4px; }
+    .red-btn {
+        width: 64px;
+        height: 64px;
+    }
 }
+
 
 .boost-stack {
   position: absolute;
