@@ -133,10 +133,34 @@ const App: React.FC = () => {
     // TASK D1: Open overlays trigger pause
     gameBridge.on('OPEN_STORE', () => { setOverlay('store'); gameBridge.togglePause(true); });
     gameBridge.on('OPEN_RANKING', () => { setOverlay('ranking'); gameBridge.togglePause(true); });
-    gameBridge.on('OPEN_SETTINGS', handleOpenSettings);
-    // MP: Listener for multiplayer modal
+      gameBridge.on('OPEN_SETTINGS', handleOpenSettings);
+      // MP: Listener for multiplayer modal
     gameBridge.on('OPEN_MULTIPLAYER', () => { setOverlay('multiplayer'); gameBridge.togglePause(true); });
   }, []);
+
+    // Force-enter full view (used by auto-enter after onboarding)
+    const enterFullView = () => {
+        setIsFull(true);
+        gameBridge.setFullscreen(true);
+
+        // Best-effort Telegram fullscreen/expand (may be ignored on iOS)
+        requestTelegramFullscreenBestEffort();
+
+        // Small pause/resume to let Phaser layout settle
+        gameBridge.togglePause(true);
+        setTimeout(() => gameBridge.togglePause(false), 300);
+
+        try {
+            const w: any = window as any;
+            if (w.Telegram?.WebApp?.expand) {
+                w.Telegram.WebApp.expand();
+            }
+        } catch {
+            // no-op
+        }
+    };
+
+    const didAutoEnterFullRef = useRef(false);
 
     useEffect(() => {
         // Auto-enter Full View after onboarding (also for returning users)
@@ -242,7 +266,6 @@ const App: React.FC = () => {
     );
   }
 
-  return (
     return (
         <div
             style={{
@@ -255,7 +278,7 @@ const App: React.FC = () => {
                 overflow: 'hidden',
                 boxSizing: 'border-box',
                 paddingTop: 'var(--tg-content-top, 0px)',
-                paddingBottom: 'var(--tg-content-bottom, 0px)'
+                paddingBottom: 'var(--tg-content-bottom, 0px)',
             }}
         >
 
