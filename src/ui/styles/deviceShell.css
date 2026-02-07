@@ -119,9 +119,9 @@ canvas {
 
 .red-btn {
     position: absolute;
-    width: 80px;
-    height: 80px;
-    /* PAW IMAGE (served from /public) */
+    /* ✅ Bigger paw buttons */
+    width: 160px;
+    height: 160px;
     background: transparent;
     background-image: url('/ui/layer/pad_paw.png');
     background-repeat: no-repeat;
@@ -145,7 +145,6 @@ canvas {
     }
 
 
-
 .left-top { left: 1%; top: 2%; }
 .left-bot { left: 1%; bottom: 2%; }
 .right-top { right: 1%; top: 2%; }
@@ -153,8 +152,8 @@ canvas {
 
 @media (max-width: 640px) {
     .red-btn {
-        width: 64px;
-        height: 64px;
+        width: 128px;
+        height: 128px;
     }
 }
 

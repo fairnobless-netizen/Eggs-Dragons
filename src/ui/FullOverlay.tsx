@@ -149,34 +149,30 @@ export const FullOverlay: React.FC<FullOverlayProps> = ({ isFull, toggleFull, on
     );
   }
 
-  // Button styles with scaling for mobile
-  const mobileScale = isMobile ? 0.8 : 1.0;
-  
-  const btnStyle = (id: ControlId): React.CSSProperties => {
-    if (isPhone) {
-        // Phone Layout: Relative to the 2:1 container logic below
+
+    // Button styles (size is controlled by CSS .red-btn)
+    const btnStyle = (id: ControlId): React.CSSProperties => {
+        if (isPhone) {
+            return {
+                position: 'absolute',
+                pointerEvents: 'auto',
+                zIndex: 900,
+                transform: 'translate(-50%, -50%)',
+                left: `${layout[id]?.x * 100}%`,
+                top: `${layout[id]?.y * 100}%`,
+            };
+        }
+
         return {
-            position: 'absolute', // Changed from fixed to absolute to relate to container
-            width: '80px',
-            height: '80px',
+            position: 'absolute',
             pointerEvents: 'auto',
-            zIndex: 900,
-            transform: `translate(-50%, -50%) scale(${mobileScale})`,
+            zIndex: 100,
+            transform: 'translate(-50%, -50%)',
             left: `${layout[id]?.x * 100}%`,
             top: `${layout[id]?.y * 100}%`,
         };
-    }
-    return {
-      position: 'absolute',
-      width: '80px',
-      height: '80px',
-      pointerEvents: 'auto',
-      transform: `translate(-50%, -50%) scale(${mobileScale})`,
-      zIndex: 100,
-      left: `${layout[id]?.x * 100}%`,
-      top: `${layout[id]?.y * 100}%`,
     };
-  };
+
 
   const renderControl = (id: ControlId) => {
     if (!layout[id]) return null;
