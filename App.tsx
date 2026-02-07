@@ -22,8 +22,10 @@ const App: React.FC = () => {
   // START: loading screen placeholder (5s)
   const [isLoading, setIsLoading] = useState(true);
 
-  const gameRef = useRef<Phaser.Game | null>(null);
-  const sharedMountRef = useRef<HTMLDivElement | null>(null);
+    const gameRef = useRef<Phaser.Game | null>(null);
+    const sharedMountRef = useRef<HTMLDivElement | null>(null);
+    const didAutoEnterFullRef = useRef(false);
+
 
   useEffect(() => {
     // P1: Initialize Telegram WebApp on mount
@@ -74,6 +76,16 @@ const App: React.FC = () => {
     gameBridge.on('OPEN_MULTIPLAYER', () => { setOverlay('multiplayer'); gameBridge.togglePause(true); });
   }, []);
 
+    useEffect(() => {
+        // Auto-enter Full View after onboarding (also for returning users)
+        if (didAutoEnterFullRef.current) return;
+        if (isLoading) return;
+        if (!isOnboarded) return;
+
+        didAutoEnterFullRef.current = true;
+        enterFullView();
+    }, [isLoading, isOnboarded]);
+
   // Fix: Reparent game canvas when mode changes OR when onboarding completes (DeviceShell mounts)
   // P0: Added `isLoading` to dependency array to ensure canvas attaches when loading screen vanishes
   useEffect(() => {
@@ -101,7 +113,6 @@ const App: React.FC = () => {
         try {
             const w: any = window as any;
 
-            // Native Telegram WebApp API (if available)
             if (w.Telegram?.WebApp) {
                 if (typeof w.Telegram.WebApp.requestFullscreen === 'function') {
                     w.Telegram.WebApp.requestFullscreen();
@@ -111,7 +122,6 @@ const App: React.FC = () => {
                 }
             }
 
-            // Webview proxy fallback
             if (w.TelegramWebviewProxy?.postEvent) {
                 try { w.TelegramWebviewProxy.postEvent('web_app_request_fullscreen', '{}'); } catch { }
                 try { w.TelegramWebviewProxy.postEvent('web_app_expand', '{}'); } catch { }
@@ -122,16 +132,11 @@ const App: React.FC = () => {
     };
 
     const enterFullView = () => {
-        // 1) Ask Telegram to hide the top chrome (best effort)
-        requestTelegramFullscreenBestEffort();
-
-        // 2) Switch our UI to full view
+        requestTelegramFullscreenBestEffort(); // best effort (iOS может игнорировать)
         setIsFull(true);
-
-        // 3) Notify Phaser/UI bridge
         gameBridge.setFullscreen(true);
 
-        // 4) Small stability pause (same idea as toggleFull)
+        // короткая пауза для стабилизации
         gameBridge.togglePause(true);
         setTimeout(() => gameBridge.togglePause(false), 300);
     };
@@ -140,21 +145,18 @@ const App: React.FC = () => {
         const newState = !isFull;
         setIsFull(newState);
 
-        // TASK M-10: Notify Phaser about fullscreen change to adjust layouts
         gameBridge.setFullscreen(newState);
 
-        // If user enters full view manually — also ask Telegram fullscreen (best effort)
         if (newState) requestTelegramFullscreenBestEffort();
 
-        // TASK D1: Toggling fullscreen also briefly pauses for stability
         gameBridge.togglePause(true);
         setTimeout(() => gameBridge.togglePause(false), 300);
 
-        // Keep expand as a safe fallback
-        if ((window as any).Telegram?.WebApp) {
-            (window as any).Telegram.WebApp.expand();
+        if (window.Telegram?.WebApp) {
+            window.Telegram.WebApp.expand();
         }
     };
+
 
 
   const handleCloseOverlay = () => {
