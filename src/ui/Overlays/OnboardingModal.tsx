@@ -42,11 +42,32 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({ onComplete }) 
     return () => clearTimeout(timer);
   }, [username]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    // SECURITY NOTE: Sanitizing input to allow only alphanumeric and spaces.
-    const val = e.target.value.replace(/[^a-zA-Z0-9 ]/g, '');
-    setUsername(val);
-  };
+    const MAX_USERNAME_LEN = 20;
+
+    const sanitizeUsername = (raw: string) => {
+        // Allow any language/emoji. Remove control/invisible chars, normalize spaces, cap length.
+        let v = raw;
+
+        // Remove ASCII control chars + DEL + C1 controls
+        v = v.replace(/[\u0000-\u001F\u007F-\u009F]/g, '');
+
+        // Remove common “invisible formatting” chars (zero-width, bidi, BOM)
+        v = v.replace(/[\u200B-\u200F\u202A-\u202E\u2060-\u206F\uFEFF]/g, '');
+
+        // Normalize whitespace: collapse multiple spaces/tabs/newlines into single space
+        v = v.replace(/\s+/g, ' ');
+
+        // Do not auto-trim on the right (user may still type), but avoid leading spaces
+        v = v.replace(/^\s+/, '');
+
+        if (v.length > MAX_USERNAME_LEN) v = v.slice(0, MAX_USERNAME_LEN);
+        return v;
+    };
+
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setUsername(sanitizeUsername(e.target.value));
+    };
+
 
   const handleNicknameConfirm = async () => {
     if (available && !checking) {
@@ -103,7 +124,7 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({ onComplete }) 
                     onChange={handleChange}
                     className={getInputClass()}
                     placeholder="Username"
-                    maxLength={16} 
+                    maxLength={20} 
                   />
                   {checking && <div className="absolute right-3 top-3.5 animate-spin h-5 w-5 border-2 border-yellow-500 border-t-transparent rounded-full"></div>}
                   {!checking && available === true && <div className="absolute right-3 top-3 text-green-500 text-xl font-bold">✓</div>}

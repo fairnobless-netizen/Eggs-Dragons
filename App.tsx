@@ -97,28 +97,79 @@ const App: React.FC = () => {
     }
   }, [isFull, isOnboarded, isLoading]);
 
-  const toggleFull = () => {
-    const newState = !isFull;
-    setIsFull(newState);
-    
-    // TASK M-10: Notify Phaser about fullscreen change to adjust layouts
-    gameBridge.setFullscreen(newState);
-    
-    // TASK D1: Toggling fullscreen also briefly pauses for stability
-    gameBridge.togglePause(true);
-    setTimeout(() => gameBridge.togglePause(false), 300);
+    const requestTelegramFullscreenBestEffort = () => {
+        try {
+            const w: any = window as any;
 
-    if (window.Telegram?.WebApp) {
-      window.Telegram.WebApp.expand();
-    }
-  };
+            // Native Telegram WebApp API (if available)
+            if (w.Telegram?.WebApp) {
+                if (typeof w.Telegram.WebApp.requestFullscreen === 'function') {
+                    w.Telegram.WebApp.requestFullscreen();
+                }
+                if (typeof w.Telegram.WebApp.expand === 'function') {
+                    w.Telegram.WebApp.expand();
+                }
+            }
+
+            // Webview proxy fallback
+            if (w.TelegramWebviewProxy?.postEvent) {
+                try { w.TelegramWebviewProxy.postEvent('web_app_request_fullscreen', '{}'); } catch { }
+                try { w.TelegramWebviewProxy.postEvent('web_app_expand', '{}'); } catch { }
+            }
+        } catch {
+            // no-op
+        }
+    };
+
+    const enterFullView = () => {
+        // 1) Ask Telegram to hide the top chrome (best effort)
+        requestTelegramFullscreenBestEffort();
+
+        // 2) Switch our UI to full view
+        setIsFull(true);
+
+        // 3) Notify Phaser/UI bridge
+        gameBridge.setFullscreen(true);
+
+        // 4) Small stability pause (same idea as toggleFull)
+        gameBridge.togglePause(true);
+        setTimeout(() => gameBridge.togglePause(false), 300);
+    };
+
+    const toggleFull = () => {
+        const newState = !isFull;
+        setIsFull(newState);
+
+        // TASK M-10: Notify Phaser about fullscreen change to adjust layouts
+        gameBridge.setFullscreen(newState);
+
+        // If user enters full view manually — also ask Telegram fullscreen (best effort)
+        if (newState) requestTelegramFullscreenBestEffort();
+
+        // TASK D1: Toggling fullscreen also briefly pauses for stability
+        gameBridge.togglePause(true);
+        setTimeout(() => gameBridge.togglePause(false), 300);
+
+        // Keep expand as a safe fallback
+        if ((window as any).Telegram?.WebApp) {
+            (window as any).Telegram.WebApp.expand();
+        }
+    };
+
 
   const handleCloseOverlay = () => {
     setOverlay(null);
     gameBridge.togglePause(false); // TASK D1: Close resumes
   };
   
-  const handleStartGame = () => {
+    const handleStartGame = () => {
+        const handleOnboardingComplete = () => {
+            setIsOnboarded(true);
+
+            // После подтверждения онбординга — сразу включаем full view mod
+            enterFullView();
+        };
+
       setHasStarted(true);
       gameBridge.startGame();
   };
@@ -136,9 +187,10 @@ const App: React.FC = () => {
     <div style={{ width: '100vw', height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#111', overflow: 'hidden' }}>
       
       {/* START: nickname screen condition */}
-      {!isOnboarded && (
-          <OnboardingModal onComplete={() => setIsOnboarded(true)} />
-      )}
+          {!isOnboarded && (
+              <OnboardingModal onComplete={handleOnboardingComplete} />
+          )}
+
 
       {/* START: lobby screen (DeviceShell) condition */}
       {isOnboarded && !isFull && (
