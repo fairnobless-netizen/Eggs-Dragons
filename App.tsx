@@ -24,23 +24,85 @@ const App: React.FC = () => {
 
     const gameRef = useRef<Phaser.Game | null>(null);
     const sharedMountRef = useRef<HTMLDivElement | null>(null);
-    const didAutoEnterFullRef = useRef(false);
 
 
-  useEffect(() => {
-    // P1: Initialize Telegram WebApp on mount
-    TelegramService.init();
 
-    // Check onboarding status
-    const profile = StorageService.getProfile();
-    setIsOnboarded(profile.isOnboarded);
-    
-    // START: loading timer
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 5000);
-    return () => clearTimeout(timer);
-  }, []);
+    useEffect(() => {
+        // P1: Initialize Telegram WebApp on mount
+        TelegramService.init();
+
+        const updateTgMetrics = () => {
+            try {
+                const w: any = window as any;
+                const tg = w.Telegram?.WebApp;
+
+                // Telegram provides these on modern clients; fallback to 0
+                const top =
+                    tg?.contentSafeAreaInset?.top ??
+                    tg?.safeAreaInset?.top ??
+                    0;
+
+                const bottom =
+                    tg?.contentSafeAreaInset?.bottom ??
+                    tg?.safeAreaInset?.bottom ??
+                    0;
+
+                // viewportHeight is the WebApp visible height in Telegram
+                const vh =
+                    tg?.viewportHeight ??
+                    window.innerHeight;
+
+                const root = document.documentElement;
+                root.style.setProperty('--tg-viewport-h', `${Math.max(0, Math.floor(vh))}px`);
+                root.style.setProperty('--tg-content-top', `${Math.max(0, Math.floor(top))}px`);
+                root.style.setProperty('--tg-content-bottom', `${Math.max(0, Math.floor(bottom))}px`);
+            } catch {
+                // no-op
+            }
+        };
+
+        // initial metrics
+        updateTgMetrics();
+
+        // subscribe to Telegram viewport changes (best effort)
+        try {
+            const w: any = window as any;
+            const tg = w.Telegram?.WebApp;
+            if (tg?.onEvent) {
+                tg.onEvent('viewportChanged', updateTgMetrics);
+            }
+        } catch {
+            // no-op
+        }
+
+        // also handle normal browser resize
+        window.addEventListener('resize', updateTgMetrics);
+
+        // Check onboarding status
+        const profile = StorageService.getProfile();
+        setIsOnboarded(profile.isOnboarded);
+
+        // START: loading timer
+        const timer = setTimeout(() => {
+            setIsLoading(false);
+            // one more pass after loading
+            updateTgMetrics();
+        }, 5000);
+
+        return () => {
+            clearTimeout(timer);
+            window.removeEventListener('resize', updateTgMetrics);
+            try {
+                const w: any = window as any;
+                const tg = w.Telegram?.WebApp;
+                if (tg?.offEvent) {
+                    tg.offEvent('viewportChanged', updateTgMetrics);
+                }
+            } catch {
+                // no-op
+            }
+        };
+    }, []);
 
   useEffect(() => {
     if (!sharedMountRef.current) {
@@ -113,6 +175,7 @@ const App: React.FC = () => {
         try {
             const w: any = window as any;
 
+            // Native Telegram WebApp API (if available)
             if (w.Telegram?.WebApp) {
                 if (typeof w.Telegram.WebApp.requestFullscreen === 'function') {
                     w.Telegram.WebApp.requestFullscreen();
@@ -122,6 +185,7 @@ const App: React.FC = () => {
                 }
             }
 
+            // Webview proxy fallback
             if (w.TelegramWebviewProxy?.postEvent) {
                 try { w.TelegramWebviewProxy.postEvent('web_app_request_fullscreen', '{}'); } catch { }
                 try { w.TelegramWebviewProxy.postEvent('web_app_expand', '{}'); } catch { }
@@ -131,22 +195,13 @@ const App: React.FC = () => {
         }
     };
 
-    const enterFullView = () => {
-        requestTelegramFullscreenBestEffort(); // best effort (iOS может игнорировать)
-        setIsFull(true);
-        gameBridge.setFullscreen(true);
-
-        // короткая пауза для стабилизации
-        gameBridge.togglePause(true);
-        setTimeout(() => gameBridge.togglePause(false), 300);
-    };
-
     const toggleFull = () => {
         const newState = !isFull;
         setIsFull(newState);
 
         gameBridge.setFullscreen(newState);
 
+        // If entering full mode manually — try request fullscreen (best effort)
         if (newState) requestTelegramFullscreenBestEffort();
 
         gameBridge.togglePause(true);
@@ -157,24 +212,26 @@ const App: React.FC = () => {
         }
     };
 
+    const handleCloseOverlay = () => {
+        setOverlay(null);
+        gameBridge.togglePause(false); // TASK D1: Close resumes
+    };
 
+    const handleOnboardingComplete = () => {
+        // best effort: on user gesture (OK) try to request fullscreen + expand
+        requestTelegramFullscreenBestEffort();
 
-  const handleCloseOverlay = () => {
-    setOverlay(null);
-    gameBridge.togglePause(false); // TASK D1: Close resumes
-  };
-  
+        setIsOnboarded(true);
+    };
+
     const handleStartGame = () => {
-        const handleOnboardingComplete = () => {
-            setIsOnboarded(true);
+        // also try fullscreen on user gesture (Start Game)
+        requestTelegramFullscreenBestEffort();
 
-            // После подтверждения онбординга — сразу включаем full view mod
-            enterFullView();
-        };
+        setHasStarted(true);
+        gameBridge.startGame();
+    };
 
-      setHasStarted(true);
-      gameBridge.startGame();
-  };
 
   // START: Render loading placeholder
   if (isLoading) {
@@ -186,7 +243,22 @@ const App: React.FC = () => {
   }
 
   return (
-    <div style={{ width: '100vw', height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#111', overflow: 'hidden' }}>
+    return (
+        <div
+            style={{
+                width: '100vw',
+                height: 'var(--tg-viewport-h, 100vh)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                background: '#111',
+                overflow: 'hidden',
+                boxSizing: 'border-box',
+                paddingTop: 'var(--tg-content-top, 0px)',
+                paddingBottom: 'var(--tg-content-bottom, 0px)'
+            }}
+        >
+
       
       {/* START: nickname screen condition */}
           {!isOnboarded && (
