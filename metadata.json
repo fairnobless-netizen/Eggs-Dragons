@@ -1,0 +1,5 @@
+{
+  "name": "AppStore_Dragon Egg Catcher_1.2",
+  "description": "A 4-lane arcade game where a dragon catches falling eggs. Built for Telegram Mini Apps with Phaser 3.",
+  "requestFramePermissions": []
+}
