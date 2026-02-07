@@ -22,6 +22,9 @@ interface ConfirmState {
 }
 
 export const StoreModal: React.FC<StoreModalProps> = ({ isOpen, onClose }) => {
+    // BETA SAFETY: Disable real-money (Telegram Stars) purchases until backend + invoice confirmation is implemented.
+  const PURCHASES_ENABLED = false;
+
   const [activeTab, setActiveTab] = useState<'stars' | 'boosts' | 'skins'>('stars');
   const [profile, setProfile] = useState<PlayerProfile>(StorageService.getProfile());
   const [isMobileLandscape, setIsMobileLandscape] = useState(false);
@@ -57,40 +60,49 @@ export const StoreModal: React.FC<StoreModalProps> = ({ isOpen, onClose }) => {
   
   const t = I18N[profile.language] || I18N.en;
 
-  const handleBuyPack = (pack: typeof STORE_PRICES.DIAMOND_PACKS[0]) => {
+    const handleBuyPack = (pack: typeof STORE_PRICES.DIAMOND_PACKS[0]) => {
     soundService.playButtonClick();
-    
+
     // Format confirmation message for Diamond Eggs
     const msg = t.confirm_buy_pack
       .replace('{amount}', pack.amount.toString())
       .replace('{cost}', pack.costXtr.toString());
+
+    // BETA SAFETY: block real payments until backend is ready
+    if (!PURCHASES_ENABLED) {
+      setConfirmModal({
+        item: `${pack.amount} 💎`,
+        cost: `${pack.costXtr} ⭐`,
+        isPack: true,
+        onConfirm: () => {
+          alert(t.beta_purchases_disabled || "Beta mode: purchases are temporarily disabled.");
+          setConfirmModal(null);
+        }
+      });
+      return;
+    }
 
     setConfirmModal({
       item: `${pack.amount} 💎`, // Diamond Eggs
       cost: `${pack.costXtr} ⭐`, // Telegram Stars cost
       isPack: true,
       onConfirm: async () => {
-        // Mock Purchase Flow: Trigger API intent (placeholder for invoice)
         try {
-            await ApiClient.createPaymentIntent(profile.userId, pack.productId);
-            
-            // Mock Success: Add Diamond Eggs (internally stars)
-            const updated = StorageService.updateProfile({
-                stars: profile.stars + pack.amount
-            });
-            setProfile(updated);
-            gameBridge.emit('UI_STARS', updated.stars);
-            gameBridge.notifyProfileUpdate();
-            
-            setConfirmModal(null);
-            // Show Success Toast/Sound?
-            soundService.playBoost();
+          // Real flow placeholder (will be implemented later with Telegram invoice + backend confirmation)
+          await ApiClient.createPaymentIntent(profile.userId, pack.productId);
+
+          // NOTE: awarding items must happen ONLY after server confirms payment
+          // (keep empty for now; will be implemented in backend phase)
+
+          setConfirmModal(null);
         } catch (e) {
-            console.error("Purchase failed", e);
+          console.error("Purchase failed", e);
+          alert(t.purchase_failed || "Purchase failed. Please try again later.");
         }
       }
     });
   };
+
 
   const handleBuyBoost = (type: string) => {
     soundService.playButtonClick();
