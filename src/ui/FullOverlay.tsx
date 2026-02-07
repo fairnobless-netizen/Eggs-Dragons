@@ -5,6 +5,8 @@ import { RampPos } from '../app/config';
 import { StorageService, ControlLayout, PlayerProfile, ControlId } from '../app/storage';
 import { I18N } from '../app/i18n';
 import { soundService } from '../app/sound';
+import './styles/deviceShell.css';
+
 
 interface FullOverlayProps {
   isFull: boolean;

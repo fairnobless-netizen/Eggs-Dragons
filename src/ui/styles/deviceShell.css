@@ -118,24 +118,35 @@ canvas {
 }
 
 .red-btn {
-  position: absolute;
-  width: 80px;
-  height: 80px;
-  background: radial-gradient(circle at 35% 35%, #ff5252, #b71c1c);
-  border-radius: 50%;
-  border: 6px solid #7f1d1d;
-  box-shadow: 0 6px #450a0a;
-  cursor: pointer;
-  z-index: 100; 
-  display: flex;
-  align-items: center;
-  justify-content: center;
+    position: absolute;
+    width: 80px;
+    height: 80px;
+    /* PAW BUTTON */
+    background-color: transparent;
+    background-image: url('./pad_paw.png');
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: contain;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+    cursor: pointer;
+    z-index: 120;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transform: translateZ(0);
+    -webkit-tap-highlight-color: transparent;
 }
 
-.red-btn:active {
-  transform: translateY(4px);
-  box-shadow: 0 2px #450a0a;
-}
+
+
+    .red-btn:active {
+        transform: translateY(2px) scale(0.96);
+        filter: brightness(0.9);
+    }
+
+
 
 .left-top { left: 1%; top: 2%; }
 .left-bot { left: 1%; bottom: 2%; }
@@ -377,12 +388,12 @@ canvas {
     margin: 0 auto;
   }
 
-  .red-btn {
-    width: 45px;
-    height: 45px;
-    border-width: 3px;
-    box-shadow: 0 3px #450a0a;
-  }
+    .red-btn {
+        width: 48px;
+        height: 48px;
+    }
+
+
   
   .left-top { top: 2px; left: 2px; }
   .left-bot { bottom: 8vh; left: 2px; }
