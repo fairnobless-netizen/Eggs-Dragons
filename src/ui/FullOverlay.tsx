@@ -68,17 +68,21 @@ export const FullOverlay: React.FC<FullOverlayProps> = ({ isFull, toggleFull, on
       }
 
       // Canvas: allow Phaser Scale FIT to do its job; only cap by container
-      const canvas = mount.querySelector('canvas');
+            const canvas = mount.querySelector('canvas') as HTMLCanvasElement | null;
       if (canvas) {
-        Object.assign((canvas as HTMLCanvasElement).style, {
-          maxWidth: '100%',
-          maxHeight: '100%',
+        Object.assign(canvas.style, {
+          width: '100%',
+          height: '100%',
           margin: '0',
-          width: '',
-          height: '',
           transform: 'none',
+
+          // ✅ ключевое: без искажений, по широкой стороне, центр, с кропом
+          objectFit: 'cover',
+          objectPosition: 'center',
+          display: 'block',
         });
       }
+
     } else {
       // Leaving full: clear inline overrides so NormalMode CSS can control layout
       if (shared) {
