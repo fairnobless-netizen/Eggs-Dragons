@@ -19,11 +19,9 @@ export class PlayScene extends Phaser.Scene {
   private laneVisuals!: Phaser.GameObjects.Group;
   
   private magnetGlow!: Phaser.GameObjects.Graphics;
-  private tailPart!: Phaser.GameObjects.Rectangle;
-  private wingsPart!: Phaser.GameObjects.Rectangle;
-  private legsPart!: Phaser.GameObjects.Rectangle;
-  private bodyPart!: Phaser.GameObjects.Rectangle;
+  private dragonSprite!: Phaser.GameObjects.Sprite;
   private dragonContainer!: Phaser.GameObjects.Container;
+
   
   private freezeOverlay!: Phaser.GameObjects.Rectangle;
   private shieldOverlay!: Phaser.GameObjects.Rectangle;
@@ -125,18 +123,33 @@ export class PlayScene extends Phaser.Scene {
   }
 
   private createDragon() {
-    this.magnetGlow = (this as any).add.graphics();
-    this.tailPart = (this as any).add.rectangle(-30, 20, 40, 20, 0x1d4ed8).setOrigin(0.5);
-    this.wingsPart = (this as any).add.rectangle(0, -10, 80, 30, 0x60a5fa).setOrigin(0.5).setAlpha(0.6);
-    this.legsPart = (this as any).add.rectangle(0, 45, 50, 20, 0x1e3a8a).setOrigin(0.5);
-    this.bodyPart = (this as any).add.rectangle(0, 0, 50, 90, 0x3b82f6).setOrigin(0.5).setStrokeStyle(4, 0x1d4ed8);
+  // glow / эффекты можно оставить
+  this.magnetGlow = (this as any).add.graphics();
 
-    this.dragonContainer = (this as any).add.container(0, 0, [
-      this.magnetGlow, this.tailPart, this.wingsPart, this.legsPart, this.bodyPart
-    ]);
-    this.dragonContainer.setDepth(100);
-    this.updateDragonPos();
-  }
+  // 👉 ОСНОВНОЙ ДРАКОН — СПРАЙТ ИЗ ATLAS
+  this.dragonSprite = (this as any).add.sprite(
+    0,
+    0,
+    ASSETS.IMAGES.DRAGON,
+    'f_0_0'
+  );
+
+  this.dragonSprite.setOrigin(0.5, 0.5);
+  this.dragonSprite.setScale(1.0);
+  this.dragonSprite.setDepth(101);
+
+  // контейнер (если дальше логика его использует)
+  this.dragonContainer = (this as any).add.container(0, 0, [
+    this.magnetGlow,
+    this.dragonSprite,
+  ]);
+
+  this.dragonContainer.setDepth(100);
+
+  // начальная позиция
+  this.updateDragonPos();
+}
+
 
   private applyLevelConfig() {
     // Cycle through level configs if we exceed the defined data
