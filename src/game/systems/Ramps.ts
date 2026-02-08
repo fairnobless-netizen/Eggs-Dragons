@@ -53,7 +53,7 @@ const verticalOffset = 8;
 const topLiftPx = 10;
 
 // Нижние рампы опустить (оставляем твоё текущее значение)
-const bottomExtraDrop = 38;
+const bottomExtraDrop = 48;
 
 // Подъём по Y из угла (для заданной длины по X)
 const topRiseY = Math.tan(Phaser.Math.DegToRad(topAngleDeg)) * rampWidthX;
