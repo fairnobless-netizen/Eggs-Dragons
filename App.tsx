@@ -172,28 +172,46 @@ const App: React.FC = () => {
         enterFullView();
     }, [isLoading, isOnboarded]);
 
-  // Fix: Reparent game canvas when mode changes OR when onboarding completes (DeviceShell mounts)
+    // Fix: Reparent game canvas when mode changes OR when onboarding completes (DeviceShell mounts)
   // P0: Added `isLoading` to dependency array to ensure canvas attaches when loading screen vanishes
   useEffect(() => {
     const targetId = isFull ? 'full-mount-parent' : 'shell-mount-parent';
     const target = document.getElementById(targetId);
-    
-    if (target && sharedMountRef.current) {
-      // Only append if not already there to avoid unnecessary moves
-      if (sharedMountRef.current.parentElement !== target) {
-        target.appendChild(sharedMountRef.current);
-      }
-      
-      // Fix: Use requestAnimationFrame for reliable layout refresh after DOM updates
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          if (gameRef.current) {
-            gameRef.current.scale.refresh();
-          }
+
+    if (!target || !sharedMountRef.current) return;
+
+    // Only append if not already there to avoid unnecessary moves
+    if (sharedMountRef.current.parentElement !== target) {
+      target.appendChild(sharedMountRef.current);
+    }
+
+    // IMPORTANT:
+    // - Phaser.Scale.FIT writes canvas inline styles during refresh()
+    // - FullOverlay applies its own "cover" transform in Full mode
+    // If refresh() happens AFTER cover(), the canvas may "fall" to bottom-right.
+    // So we (1) refresh after DOM settles, then (2) notify FullOverlay to re-apply cover.
+    let rafA = 0;
+    let rafB = 0;
+    let rafC = 0;
+
+    rafA = requestAnimationFrame(() => {
+      rafB = requestAnimationFrame(() => {
+        if (gameRef.current) {
+          gameRef.current.scale.refresh();
+        }
+        rafC = requestAnimationFrame(() => {
+          window.dispatchEvent(new CustomEvent('PHASER_REFRESHED', { detail: { isFull } }));
         });
       });
-    }
+    });
+
+    return () => {
+      cancelAnimationFrame(rafA);
+      cancelAnimationFrame(rafB);
+      cancelAnimationFrame(rafC);
+    };
   }, [isFull, isOnboarded, isLoading]);
+
 
     const requestTelegramFullscreenBestEffort = () => {
         try {

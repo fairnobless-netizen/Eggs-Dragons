@@ -35,12 +35,14 @@ export const FullOverlay: React.FC<FullOverlayProps> = ({ isFull, toggleFull, on
   const [isPortrait, setIsPortrait] = useState(false);
 
   const t = I18N[profile.language] || I18N.en;
-
-   // Enforce Fullscreen geometry: do NOT reuse NormalMode positioning
+  // Enforce Fullscreen geometry: do NOT reuse NormalMode positioning
+  // Root cause of the "falls to bottom-right" bug:
+  // Phaser.Scale.FIT writes inline canvas styles during scale.refresh().
+  // If refresh() runs AFTER our cover transform, it overwrites our geometry.
+  // App.tsx now dispatches PHASER_REFRESHED after each refresh; we re-apply cover on that event.
   useLayoutEffect(() => {
     const mount = document.getElementById('full-mount-parent');
     const shared = document.getElementById('game-shared-mount');
-
     if (!mount || !shared) return;
 
     // Always keep full mount stable
@@ -52,21 +54,17 @@ export const FullOverlay: React.FC<FullOverlayProps> = ({ isFull, toggleFull, on
       backgroundColor: '#000',
     });
 
-    const canvas =
-      (shared.querySelector('canvas') as HTMLCanvasElement | null) ??
-      (mount.querySelector('canvas') as HTMLCanvasElement | null);
-
-    const clearCanvasInline = () => {
-      if (!canvas) return;
-      canvas.style.position = '';
-      canvas.style.left = '';
-      canvas.style.top = '';
-      canvas.style.width = '';
-      canvas.style.height = '';
-      canvas.style.margin = '';
-      canvas.style.display = '';
-      canvas.style.transformOrigin = '';
-      canvas.style.transform = '';
+    const clearCanvasInline = (c: HTMLCanvasElement | null) => {
+      if (!c) return;
+      c.style.position = '';
+      c.style.left = '';
+      c.style.top = '';
+      c.style.width = '';
+      c.style.height = '';
+      c.style.margin = '';
+      c.style.display = '';
+      c.style.transformOrigin = '';
+      c.style.transform = '';
     };
 
     const clearSharedInline = () => {
@@ -79,9 +77,13 @@ export const FullOverlay: React.FC<FullOverlayProps> = ({ isFull, toggleFull, on
       shared.style.transform = '';
     };
 
+    const getCanvas = () =>
+      (shared.querySelector('canvas') as HTMLCanvasElement | null) ??
+      (mount.querySelector('canvas') as HTMLCanvasElement | null);
+
     if (!isFull) {
       // Leaving full: remove inline overrides so NormalMode CSS can control layout
-      clearCanvasInline();
+      clearCanvasInline(getCanvas());
       clearSharedInline();
       return;
     }
@@ -99,10 +101,7 @@ export const FullOverlay: React.FC<FullOverlayProps> = ({ isFull, toggleFull, on
 
     // Canvas cover: fill screen by width/height without distortion, crop if needed
     const applyCover = () => {
-      const c =
-        (shared.querySelector('canvas') as HTMLCanvasElement | null) ??
-        (mount.querySelector('canvas') as HTMLCanvasElement | null);
-
+      const c = getCanvas();
       if (!c) return;
 
       const rect = mount.getBoundingClientRect();
@@ -126,55 +125,46 @@ export const FullOverlay: React.FC<FullOverlayProps> = ({ isFull, toggleFull, on
     };
 
     // Important: when switching Normal->Full, layout settles in 1–2 frames
-    let raf1 = requestAnimationFrame(() => {
-      applyCover();
-      requestAnimationFrame(applyCover);
+    let rafA = 0;
+    let rafB = 0;
+    rafA = requestAnimationFrame(() => {
+      rafB = requestAnimationFrame(() => {
+        applyCover();
+      });
     });
 
     const onResize = () => applyCover();
+    const onPhaserRefreshed = () => applyCover();
     window.addEventListener('resize', onResize);
     window.addEventListener('orientationchange', onResize);
+    window.addEventListener('PHASER_REFRESHED', onPhaserRefreshed as any);
 
-    const ro = new ResizeObserver(() => applyCover());
-    ro.observe(mount);
+    const roMount = new ResizeObserver(() => applyCover());
+    roMount.observe(mount);
+
+    // Also observe the canvas itself: Phaser.Scale.FIT may resize it without changing mount rect
+    const roCanvas = new ResizeObserver(() => applyCover());
+    const c0 = getCanvas();
+    if (c0) roCanvas.observe(c0);
 
     // small delayed pass for iOS/Telegram webview
-    const t = window.setTimeout(applyCover, 80);
+    const timeoutId = window.setTimeout(applyCover, 80);
 
     return () => {
-      cancelAnimationFrame(raf1);
-      window.clearTimeout(t);
+      cancelAnimationFrame(rafA);
+      cancelAnimationFrame(rafB);
+      window.clearTimeout(timeoutId);
       window.removeEventListener('resize', onResize);
       window.removeEventListener('orientationchange', onResize);
-      ro.disconnect();
+      window.removeEventListener('PHASER_REFRESHED', onPhaserRefreshed as any);
+      roMount.disconnect();
+      roCanvas.disconnect();
 
       // cleanup inline styles (otherwise next mode inherits wrong geometry)
-      const c =
-        (shared.querySelector('canvas') as HTMLCanvasElement | null) ??
-        (mount.querySelector('canvas') as HTMLCanvasElement | null);
-
-      if (c) {
-        c.style.position = '';
-        c.style.left = '';
-        c.style.top = '';
-        c.style.width = '';
-        c.style.height = '';
-        c.style.margin = '';
-        c.style.display = '';
-        c.style.transformOrigin = '';
-        c.style.transform = '';
-      }
-
-      shared.style.position = '';
-      shared.style.left = '';
-      shared.style.top = '';
-      shared.style.width = '';
-      shared.style.height = '';
-      shared.style.margin = '';
-      shared.style.transform = '';
+      clearCanvasInline(getCanvas());
+      clearSharedInline();
     };
   }, [isFull]);
-
 
   useEffect(() => {
     // Basic mobile check
