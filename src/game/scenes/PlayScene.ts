@@ -165,7 +165,7 @@ private ensureDragonAnims() {
   (this as any).anims.create({
     key: 'dragon_hop',
     frames,
-    frameRate: 24,
+    frameRate: 10,
     repeat: 0,
   });
 
@@ -174,7 +174,7 @@ private ensureDragonAnims() {
     key: 'dragon_idle',
     frames,
     frameRate: 10,
-    repeat: -1,
+    repeat: 0,
   });
 }
 
@@ -646,29 +646,32 @@ gameBridge.on('G_MOVE_DRAGON', (pos: RampPos) => {
     radius = 95;
   }
 
-  // === ПУЛЬС (очень мягкий) ===
+    // === ПУЛЬС (очень мягкий) ===
   const pulse = 0.85 + 0.15 * Math.sin(time / 220);
 
-  // === РИСУЕМ ГРАДИЕНТ ===
+  // если нет активных эффектов — ничего не рисуем (убираем постоянный “синий” круг)
+  const hasAnyEffect =
+    (this.boosts?.isMagnetActive ?? false) ||
+    time < this.tailHighlightUntil ||
+    time < this.wingsHighlightUntil ||
+    time < this.legsHighlightUntil;
+
   this.magnetGlow.clear();
 
-  this.magnetGlow.fillStyle(color, baseAlpha * pulse);
+  if (!hasAnyEffect) {
+    return;
+  }
 
   // центр подсветки — тело дракона
   const glowY = this.dragonSprite
-  ? -0.2 * this.dragonSprite.displayHeight
-  : 0;
+    ? -0.2 * this.dragonSprite.displayHeight
+    : 0;
 
-this.magnetGlow.fillCircle(0, glowY, radius);
-
-
-  // мягкое “затухание” к краям
-  this.magnetGlow.fillStyle(color, baseAlpha * 0.5 * pulse);
-  this.magnetGlow.fillCircle(0, 0, radius * 1.25);
-
-  this.magnetGlow.fillStyle(color, baseAlpha * 0.25 * pulse);
-  this.magnetGlow.fillCircle(0, 0, radius * 1.5);
+  // ОДИН круг — без лишних “внешних” колец
+  this.magnetGlow.fillStyle(color, baseAlpha * pulse);
+  this.magnetGlow.fillCircle(0, glowY, radius);
 }
+
 private playDragonHop() {
   if (!this.dragonSprite) return;
   if (this.dragonHopBusy) return;
@@ -682,13 +685,14 @@ private playDragonHop() {
     () => {
       this.dragonHopBusy = false;
 
-      // вернём idle (или просто стопнем на первом кадре)
+      // вернёмся в статичный idle
       this.dragonSprite?.play('dragon_idle');
-      // или так:
-      // this.dragonSprite?.setFrame('f_0_0');
+      // на всякий случай “зафиксируем” кадр:
+      this.dragonSprite?.setFrame('f_0_0');
     }
   );
 }
+
 
 updateDragonPos() {
   if (!this.dragonContainer) return;
