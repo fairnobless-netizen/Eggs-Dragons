@@ -26,21 +26,31 @@ export class Spawner {
   }
 
   private spawn(time: number) {
-    // Pick random lane
-    const lane = Phaser.Math.Between(0, GAME_CONFIG.LANES - 1);
-    
-    // Pick type (Unused in current Egg logic but kept for reference)
-    const rand = Math.random();
-    let type = EggType.NORMAL;
-    if (rand > 0.9) type = EggType.GOLD; // 10% Gold
-    else if (rand > 0.7) type = EggType.CRACKED; // 20% Cracked
+  // Pick random lane
+  const lane = Phaser.Math.Between(0, GAME_CONFIG.LANES - 1);
 
-    // Create egg with dummy ramps/duration to satisfy constructor, then activate
-    // Note: Spawner seems to be legacy code compared to EggMovementSystem
-    const egg = new Egg(this.scene, null as any, lane, 1000);
-    this.group.add(egg);
-    
-    // Set speed based on difficulty
-    egg.activate(this.difficulty.getEggSpeed(time));
-  }
+  // Pick egg type (NEW PNG types)
+  const rand = Math.random();
+  let type = EggType.WHITE;
+
+  // Проценты можно тюнить позже — сейчас важно убрать legacy NORMAL/CRACKED
+  if (rand > 0.92) type = EggType.GOLD;          // ~8% gold
+  else if (rand > 0.80) type = EggType.GREEN;    // ~12% green
+  else if (rand > 0.68) type = EggType.BLUE;     // ~12% blue
+  else if (rand > 0.60) type = EggType.SCALE;    // ~8% scale
+  else if (rand > 0.52) type = EggType.GRENADE;  // ~8% grenade/bomb
+  // else WHITE
+
+  // Create egg with dummy ramps/duration to satisfy constructor, then activate
+  const egg = new Egg(this.scene, null as any, lane, 1000);
+
+  // IMPORTANT: use new EggType directly
+  egg.setType(type);
+
+  this.group.add(egg);
+
+  // Set speed based on difficulty
+  egg.activate(this.difficulty.getEggSpeed(time));
+}
+
 }

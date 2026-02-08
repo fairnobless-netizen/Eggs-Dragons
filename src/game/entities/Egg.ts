@@ -4,16 +4,21 @@ import { ASSETS } from '../../app/config';
 import { RampsSystem } from '../systems/Ramps';
 
 export enum EggType {
-  NORMAL = 'normal',
-  GOLD = 'gold',
-  CRACKED = 'cracked'
+  WHITE = 'white',
+  GREEN = 'green',
+  GOLD  = 'gold',
+  BLUE  = 'blue',
+  GRENADE = 'grenade',
+  SCALE = 'scale',
 }
 
 export class Egg extends Phaser.GameObjects.Sprite {
   public lane: number;
   public progress: number = 0;
   public isActive: boolean = true;
-  
+  public type: EggType = EggType.WHITE;
+  private rotationSpeed: number = 0.006; // radians per ms (тюнится)
+
   private ramps: RampsSystem;
   private duration: number = 2000;
   private elapsed: number = 0;
@@ -26,8 +31,37 @@ export class Egg extends Phaser.GameObjects.Sprite {
     this.duration = duration;
     
     scene.add.existing(this);
+    this.setType(EggType.WHITE); // дефолт
+
     this.updatePosition();
     (this as any).setTint(0x000000); // LCD style silhouette initially
+  }
+    setType(type: EggType) {
+    this.type = type;
+
+    // Map type -> texture key (ASSETS keys already used in BootScene preload)
+    switch (type) {
+      case EggType.GOLD:
+        this.setTexture(ASSETS.IMAGES.EGG_GOLDEN);
+        break;
+      case EggType.GREEN:
+        this.setTexture(ASSETS.IMAGES.EGG_MITHRIL);
+        break;
+      case EggType.GRENADE:
+        this.setTexture(ASSETS.IMAGES.EGG_BOMB);
+        break;
+      case EggType.SCALE:
+        this.setTexture(ASSETS.IMAGES.EGG_SCALE);
+        break;
+      case EggType.BLUE:
+        // если ключа нет — упадём на WHITE
+        this.setTexture(((ASSETS.IMAGES as any).EGG_BLUE) ?? ASSETS.IMAGES.EGG_WHITE);
+        break;
+      case EggType.WHITE:
+      default:
+        this.setTexture(ASSETS.IMAGES.EGG_WHITE);
+        break;
+    }
   }
 
   // Method for Spawner compatibility
@@ -47,6 +81,9 @@ export class Egg extends Phaser.GameObjects.Sprite {
     }
 
     this.updatePosition();
+        // Rotate PNG while moving
+    this.rotation += this.rotationSpeed * delta;
+
   }
 
   private updatePosition() {
