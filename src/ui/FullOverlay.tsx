@@ -104,6 +104,7 @@ useLayoutEffect(() => {
     const c = getCanvas();
     if (!c) return;
 
+    // KEY: use CSS rect, not canvas.width/height (Phaser FIT updates CSS size)
     const mountRect = mount.getBoundingClientRect();
     const canvasRect = c.getBoundingClientRect();
 
@@ -116,7 +117,7 @@ useLayoutEffect(() => {
 
     const scale = Math.max(mw / cw, mh / ch);
 
-    // Hard reset Phaser-injected positioning (prevents “sticking” to corner)
+    // Hard reset Phaser injected positioning (prevents sticking / staying small)
     c.style.left = '';
     c.style.top = '';
     c.style.right = '';
@@ -136,7 +137,7 @@ useLayoutEffect(() => {
     });
   };
 
-  // settle DOM -> apply cover twice
+  // Settle DOM then apply
   let raf1 = 0;
   let raf2 = 0;
   raf1 = requestAnimationFrame(() => {
@@ -150,7 +151,7 @@ useLayoutEffect(() => {
   window.addEventListener('resize', onResize);
   window.addEventListener('orientationchange', onResize);
 
-  // After Phaser refresh, re-apply cover (critical)
+  // CRITICAL: after Phaser refresh, re-apply cover
   const onPhaserRefreshed = () => {
     enforceSharedFull();
     applyCover();
