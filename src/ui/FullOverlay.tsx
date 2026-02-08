@@ -36,36 +36,62 @@ export const FullOverlay: React.FC<FullOverlayProps> = ({ isFull, toggleFull, on
 
   const t = I18N[profile.language] || I18N.en;
 
-  // Enforce Canvas Centering & Aspect Ratio Protection
+  // Enforce 2:1 game area in Telegram Full mode (mobile landscape only)
   useLayoutEffect(() => {
-    // We target the parent and canvas to ensure they are centered and don't stretch
-    const mount = document.getElementById('full-mount-parent');
-    if (mount) {
-        Object.assign(mount.style, {
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            width: '100%',
-            height: '100%',
-            overflow: 'hidden',
-            backgroundColor: '#000'
-        });
-        
-        // Find canvas and ensure it fits nicely
-        const canvas = mount.querySelector('canvas');
-        if (canvas) {
-            Object.assign(canvas.style, {
-                maxWidth: '100%',
-                maxHeight: '100%',
-                objectFit: 'contain',
-                margin: 'auto',
-                // Important: clear any forced width/height that causes stretching
-                width: '', 
-                height: ''
-            });
-        }
-    }
+    if (!isFull) return;
+
+    const parent = document.getElementById('full-mount-parent');
+    const shared = document.getElementById('game-shared-mount');
+
+    if (!parent || !shared) return;
+
+    // Parent always centers content (safe for all)
+    Object.assign(parent.style, {
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      width: '100%',
+      height: '100%',
+      overflow: 'hidden',
+      backgroundColor: '#000',
+    });
+
+    const applySize = () => {
+      // Only force 2:1 on phone-ish landscape (Telegram target)
+      // If not phone — keep previous behavior (100% fill)
+      const isLandscape = window.innerWidth > window.innerHeight;
+      const isPhoneLike = window.innerWidth < 900 && window.innerHeight < 520;
+
+      if (!(isLandscape && isPhoneLike)) {
+        shared.style.width = '100%';
+        shared.style.height = '100%';
+        return;
+      }
+
+      const pw = parent.clientWidth;
+      const ph = parent.clientHeight;
+
+      // Fit a 2:1 box into parent
+      const w = Math.min(pw, ph * 2);
+      const h = Math.floor(w / 2);
+
+      shared.style.width = `${Math.floor(w)}px`;
+      shared.style.height = `${h}px`;
+    };
+
+    applySize();
+
+    const ro = new ResizeObserver(() => applySize());
+    ro.observe(parent);
+
+    window.addEventListener('resize', applySize);
+
+    return () => {
+      ro.disconnect();
+      window.removeEventListener('resize', applySize);
+    };
   }, [isFull]);
+
 
   useEffect(() => {
     // Basic mobile check
