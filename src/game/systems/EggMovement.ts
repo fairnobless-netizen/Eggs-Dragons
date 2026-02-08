@@ -34,11 +34,17 @@ export class EggMovementSystem {
   private profile: PlayerProfile;
 
   constructor(scene: Phaser.Scene, ramps: RampsSystem) {
-    this.scene = scene;
-    this.ramps = ramps;
-    this.floorY = GAME_CONFIG.HEIGHT - 40;
-    this.profile = StorageService.getProfile();
-  }
+  this.scene = scene;
+  this.ramps = ramps;
+
+  // Use Phaser base size as source of truth for geometry.
+  // (Game.ts uses scale.width=1200,height=600, while GAME_CONFIG may differ.)
+  const baseH = (this.scene.scale as any)?.baseSize?.height ?? GAME_CONFIG.HEIGHT;
+  this.floorY = baseH - 40;
+
+  this.profile = StorageService.getProfile();
+}
+
 
   setLevel(idx: number) {
     this.currentLevelIndex = idx;
@@ -136,7 +142,9 @@ export class EggMovementSystem {
     }
 
     const baseSpeed = baseSpeedForLevel * speedMult * (this.isHard ? GAME_CONFIG.HARD_MULTIPLIER : 1) * this.timeScale * heavyTailMult;
-    const centerX = GAME_CONFIG.WIDTH / 2;
+const baseW = (this.scene.scale as any)?.baseSize?.width ?? GAME_CONFIG.WIDTH;
+const centerX = baseW / 2;
+
     
     for (let i = this.eggs.length - 1; i >= 0; i--) {
       const egg = this.eggs[i];
