@@ -336,14 +336,78 @@ canvas {
   }
 
   .top-bar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
     height: 28px;
-    margin-bottom: 2px;
+    margin: 0;
     gap: 8px;
-    position: relative;
-    z-index: 50; /* Ensure on top */
+    z-index: 60;
   }
 
-  /* Unified Button Mobile Overrides */
+  .bottom-bar {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 30px;
+    margin: 0;
+    gap: 8px;
+    z-index: 60;
+  }
+
+  /* зона игры между top-bar и bottom-bar */
+  .main-area {
+    position: absolute;
+    top: 28px;
+    bottom: 30px;
+    left: 0;
+    right: 0;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .game-screen-frame {
+    position: relative;
+    top: auto;
+    left: auto;
+    transform: none;
+
+    /* всегда 2:1, вписываемся в доступное место */
+    width: min(96vw, calc((100vh - 28px - 30px) * 2));
+    aspect-ratio: 2 / 1;
+    height: auto;
+    max-height: calc(100vh - 28px - 30px);
+
+    margin: 0;
+    border: 2px solid #333;
+    border-radius: 12px;
+    box-shadow: none;
+    z-index: 10;
+    background: #000;
+    overflow: hidden;
+  }
+
+  .game-screen-frame::after {
+    content: '';
+    position: absolute;
+    inset: -2px;
+    border: 2px solid rgba(255,255,255,0.15);
+    border-radius: 12px;
+    pointer-events: none;
+    z-index: 20;
+  }
+
+  /* канвас всегда строго внутри рамки */
+  .game-screen-frame canvas {
+    width: 100% !important;
+    height: 100% !important;
+    display: block;
+  }
+
   .ui-square-btn {
     width: 26px;
     height: 26px;
@@ -355,57 +419,11 @@ canvas {
     border-radius: 4px;
   }
 
-  .main-area {
-    padding: 0; /* UI: Reset padding */
-    position: static; /* Let children position relative to device-shell */
+  .red-btn {
+    width: 95px;
+    height: 95px;
   }
-  
-  /* UI: NormalMode viewport ratios based on 170x80 ref */
-  /* Width: 145/170 = 85.29% */
-  /* Height: 65/80 = 81.25% */
-  /* UI: Root->viewport layout calc */
-  .game-screen-frame {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 85.29%;
-    height: 81.25%;
-    margin: 0;
-    border: 2px solid #333;
-    border-radius: 12px;
-    box-shadow: none;
-    aspect-ratio: auto;
-    max-height: none;
-    z-index: 10;
-    background: #000;
-  }
-
-  /* UI: Overlay placeholder frame */
-  .game-screen-frame::after {
-    content: '';
-    position: absolute;
-    inset: -2px; /* Align with border */
-    border: 2px solid rgba(255,255,255,0.15);
-    border-radius: 12px;
-    pointer-events: none;
-    z-index: 20;
-  }
-
-  .game-screen-frame canvas {
-  width: 100% !important;
-  height: 100% !important;
-  display: block;
-}
-
-
-    .red-btn {
-        width: 95px;
-        height: 95px;
-    }
-
-
-  
+ 
   .left-top { top: 2px; left: 2px; }
   .left-bot { bottom: 8vh; left: 2px; }
   .right-top { top: 2px; right: 2px; }
