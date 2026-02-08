@@ -38,26 +38,55 @@ export const FullOverlay: React.FC<FullOverlayProps> = ({ isFull, toggleFull, on
 
    // Enforce Fullscreen geometry: do NOT reuse NormalMode positioning
   useLayoutEffect(() => {
-    if (!isFull) return;
-
     const mount = document.getElementById('full-mount-parent');
     const shared = document.getElementById('game-shared-mount');
 
     if (!mount || !shared) return;
 
-    // Full overlay = fixed viewport (true fullscreen host)
+    // Always keep full mount stable
     Object.assign(mount.style, {
-      position: 'fixed',
-      inset: '0',
-      width: '100vw',
-      height: '100vh',
-      margin: '0',
-      padding: '0',
+      position: 'relative',
+      width: '100%',
+      height: '100%',
       overflow: 'hidden',
       backgroundColor: '#000',
     });
 
-    // HARD RESET shared mount (remove any NormalMode influence)
+    const canvas =
+      (shared.querySelector('canvas') as HTMLCanvasElement | null) ??
+      (mount.querySelector('canvas') as HTMLCanvasElement | null);
+
+    const clearCanvasInline = () => {
+      if (!canvas) return;
+      canvas.style.position = '';
+      canvas.style.left = '';
+      canvas.style.top = '';
+      canvas.style.width = '';
+      canvas.style.height = '';
+      canvas.style.margin = '';
+      canvas.style.display = '';
+      canvas.style.transformOrigin = '';
+      canvas.style.transform = '';
+    };
+
+    const clearSharedInline = () => {
+      shared.style.position = '';
+      shared.style.left = '';
+      shared.style.top = '';
+      shared.style.width = '';
+      shared.style.height = '';
+      shared.style.margin = '';
+      shared.style.transform = '';
+    };
+
+    if (!isFull) {
+      // Leaving full: remove inline overrides so NormalMode CSS can control layout
+      clearCanvasInline();
+      clearSharedInline();
+      return;
+    }
+
+    // Entering full: hard reset shared container (prevents "falling" to bottom-right)
     Object.assign(shared.style, {
       position: 'absolute',
       left: '0px',
@@ -65,24 +94,25 @@ export const FullOverlay: React.FC<FullOverlayProps> = ({ isFull, toggleFull, on
       width: '100%',
       height: '100%',
       margin: '0',
-      padding: '0',
       transform: 'none',
     });
 
+    // Canvas cover: fill screen by width/height without distortion, crop if needed
     const applyCover = () => {
-      const canvas = shared.querySelector('canvas') as HTMLCanvasElement | null;
-      if (!canvas) return;
+      const c =
+        (shared.querySelector('canvas') as HTMLCanvasElement | null) ??
+        (mount.querySelector('canvas') as HTMLCanvasElement | null);
 
-      const hostRect = mount.getBoundingClientRect();
-      const cw = canvas.width || canvas.getBoundingClientRect().width;
-      const ch = canvas.height || canvas.getBoundingClientRect().height;
+      if (!c) return;
 
-      if (!hostRect.width || !hostRect.height || !cw || !ch) return;
+      const rect = mount.getBoundingClientRect();
+      const cw = c.width || c.getBoundingClientRect().width;
+      const ch = c.height || c.getBoundingClientRect().height;
+      if (!cw || !ch || !rect.width || !rect.height) return;
 
-      // Cover without distortion (crop top/bottom if needed)
-      const scale = Math.max(hostRect.width / cw, hostRect.height / ch);
+      const scale = Math.max(rect.width / cw, rect.height / ch);
 
-      Object.assign(canvas.style, {
+      Object.assign(c.style, {
         position: 'absolute',
         left: '50%',
         top: '50%',
@@ -95,53 +125,56 @@ export const FullOverlay: React.FC<FullOverlayProps> = ({ isFull, toggleFull, on
       });
     };
 
+    // Important: when switching Normal->Full, layout settles in 1–2 frames
+    let raf1 = requestAnimationFrame(() => {
+      applyCover();
+      requestAnimationFrame(applyCover);
+    });
+
     const onResize = () => applyCover();
-
-    // Run multiple times because parent re-parenting + Phaser FIT can settle after a tick
-    const raf1 = requestAnimationFrame(applyCover);
-    const raf2 = requestAnimationFrame(applyCover);
-    const t0 = window.setTimeout(applyCover, 50);
-    const t1 = window.setTimeout(applyCover, 250);
-
     window.addEventListener('resize', onResize);
     window.addEventListener('orientationchange', onResize);
-    window.visualViewport?.addEventListener('resize', onResize);
+
+    const ro = new ResizeObserver(() => applyCover());
+    ro.observe(mount);
+
+    // small delayed pass for iOS/Telegram webview
+    const t = window.setTimeout(applyCover, 80);
 
     return () => {
       cancelAnimationFrame(raf1);
-      cancelAnimationFrame(raf2);
-      clearTimeout(t0);
-      clearTimeout(t1);
-
+      window.clearTimeout(t);
       window.removeEventListener('resize', onResize);
       window.removeEventListener('orientationchange', onResize);
-      window.visualViewport?.removeEventListener('resize', onResize);
+      ro.disconnect();
 
-      // Cleanup canvas inline styles so NormalMode can control it again
-      const canvas = shared.querySelector('canvas') as HTMLCanvasElement | null;
-      if (canvas) {
-        canvas.style.position = '';
-        canvas.style.left = '';
-        canvas.style.top = '';
-        canvas.style.width = '';
-        canvas.style.height = '';
-        canvas.style.margin = '';
-        canvas.style.display = '';
-        canvas.style.transformOrigin = '';
-        canvas.style.transform = '';
+      // cleanup inline styles (otherwise next mode inherits wrong geometry)
+      const c =
+        (shared.querySelector('canvas') as HTMLCanvasElement | null) ??
+        (mount.querySelector('canvas') as HTMLCanvasElement | null);
+
+      if (c) {
+        c.style.position = '';
+        c.style.left = '';
+        c.style.top = '';
+        c.style.width = '';
+        c.style.height = '';
+        c.style.margin = '';
+        c.style.display = '';
+        c.style.transformOrigin = '';
+        c.style.transform = '';
       }
 
-      // Cleanup shared mount inline overrides
-      (shared as HTMLElement).style.position = '';
-      (shared as HTMLElement).style.left = '';
-      (shared as HTMLElement).style.top = '';
-      (shared as HTMLElement).style.width = '';
-      (shared as HTMLElement).style.height = '';
-      (shared as HTMLElement).style.margin = '';
-      (shared as HTMLElement).style.padding = '';
-      (shared as HTMLElement).style.transform = '';
+      shared.style.position = '';
+      shared.style.left = '';
+      shared.style.top = '';
+      shared.style.width = '';
+      shared.style.height = '';
+      shared.style.margin = '';
+      shared.style.transform = '';
     };
   }, [isFull]);
+
 
   useEffect(() => {
     // Basic mobile check
