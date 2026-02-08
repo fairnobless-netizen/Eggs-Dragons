@@ -67,34 +67,96 @@ export const FullOverlay: React.FC<FullOverlayProps> = ({ isFull, toggleFull, on
         });
       }
 
-      // Canvas: allow Phaser Scale FIT to do its job; only cap by container
-            const canvas = mount.querySelector('canvas') as HTMLCanvasElement | null;
-      if (canvas) {
+            // Canvas (FULL): true "cover" without distortion.
+      // We center canvas and scale by max(container/canvas) => fills screen, crops top/bottom a bit if needed.
+      const applyCover = () => {
+        const host = mount; // full-mount-parent
+        const canvas =
+          (shared?.querySelector('canvas') as HTMLCanvasElement | null) ??
+          (host.querySelector('canvas') as HTMLCanvasElement | null);
+
+        if (!canvas) return;
+
+        const rect = host.getBoundingClientRect();
+        const cw = canvas.width || canvas.getBoundingClientRect().width;
+        const ch = canvas.height || canvas.getBoundingClientRect().height;
+        if (!cw || !ch) return;
+
+        const scale = Math.max(rect.width / cw, rect.height / ch);
+
         Object.assign(canvas.style, {
-          width: '100%',
-          height: '100%',
+          position: 'absolute',
+          left: '50%',
+          top: '50%',
+          width: `${cw}px`,
+          height: `${ch}px`,
           margin: '0',
-          transform: 'none',
-
-          // ✅ ключевое: без искажений, по широкой стороне, центр, с кропом
-          objectFit: 'cover',
-          objectPosition: 'center',
           display: 'block',
+          transformOrigin: '50% 50%',
+          transform: `translate(-50%, -50%) scale(${scale})`,
         });
-      }
+      };
 
-    } else {
-      // Leaving full: clear inline overrides so NormalMode CSS can control layout
-      if (shared) {
-        shared.style.position = '';
-        shared.style.left = '';
-        shared.style.top = '';
-        shared.style.width = '';
-        shared.style.height = '';
-        shared.style.margin = '';
-        shared.style.transform = '';
-      }
-    }
+      // initial + on resize
+      const raf = requestAnimationFrame(applyCover);
+      window.addEventListener('resize', applyCover);
+
+      return () => {
+  cancelAnimationFrame(raf);
+  window.removeEventListener('resize', applyCover);
+
+  const canvas =
+    (shared?.querySelector('canvas') as HTMLCanvasElement | null) ??
+    (mount.querySelector('canvas') as HTMLCanvasElement | null);
+
+  if (canvas) {
+    canvas.style.position = '';
+    canvas.style.left = '';
+    canvas.style.top = '';
+    canvas.style.width = '';
+    canvas.style.height = '';
+    canvas.style.margin = '';
+    canvas.style.display = '';
+    canvas.style.transformOrigin = '';
+    canvas.style.transform = '';
+  }
+};
+
+} else {
+  // Leaving full: clear inline overrides so NormalMode CSS can control layout
+
+  // reset shared mount styles
+  if (shared) {
+    shared.style.position = '';
+    shared.style.left = '';
+    shared.style.top = '';
+    shared.style.width = '';
+    shared.style.height = '';
+    shared.style.margin = '';
+    shared.style.transform = '';
+  }
+
+  // reset canvas styles (was "cover" in full mode)
+  const canvas =
+    (shared?.querySelector('canvas') as HTMLCanvasElement | null) ??
+    (mount.querySelector('canvas') as HTMLCanvasElement | null);
+
+  if (canvas) {
+    canvas.style.position = '';
+    canvas.style.left = '';
+    canvas.style.top = '';
+    canvas.style.width = '';
+    canvas.style.height = '';
+    canvas.style.margin = '';
+    canvas.style.display = '';
+    canvas.style.transformOrigin = '';
+    canvas.style.transform = '';
+  }
+
+  // optional: reset mount to avoid affecting Normal
+  mount.style.overflow = '';
+  mount.style.backgroundColor = '';
+}
   }, [isFull]);
 
   useEffect(() => {
