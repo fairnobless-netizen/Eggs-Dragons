@@ -24,7 +24,7 @@ export const launchGame = (container: HTMLElement | string) => {
     scale: {
       mode: Phaser.Scale.FIT,
       autoCenter: Phaser.Scale.CENTER_BOTH,
-      width: 800,
+      width: 1200,
       height: 600
     },
     scene: [BootScene, PlayScene]

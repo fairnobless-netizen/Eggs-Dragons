@@ -26,6 +26,10 @@ export class BootScene extends Phaser.Scene {
     );
 
     (this as any).load.image(ASSETS.IMAGES.LANE, 'ui/lane.png');
+    // Level stages (backgrounds) - stage_1..stage_5
+    for (let i = 1; i <= 5; i++) {
+    (this as any).load.image(`stage_${i}`, `lvls/stage_${i}.png`);
+    }
 
 
     // Eggs

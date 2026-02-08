@@ -34,6 +34,8 @@ export class PlayScene extends Phaser.Scene {
   
   private currentLevelIndex: number = 0;
   private currentRampColor: number = 0x334155;
+  private stageBg?: Phaser.GameObjects.Image;
+
   
   private score: number = 0;
   private lives: number = 3;
@@ -64,52 +66,58 @@ export class PlayScene extends Phaser.Scene {
   constructor() { super('PlayScene'); }
 
   create() {
-    this.profile = StorageService.getProfile();
-    soundService.init(); 
-    this.backgroundLayer = (this as any).add.rectangle(0, 0, 800, 600, 0x000000).setOrigin(0);
-    this.ramps = new RampsSystem(this);
-    this.eggs = new EggMovementSystem(this, this.ramps);
-    this.boosts = new BoostsSystem(this);
-    
-    this.laneVisuals = (this as any).add.group();
-    this.createDragon();
+  this.profile = StorageService.getProfile();
+  soundService.init();
 
-    // Overlays for Boosts
-    this.freezeOverlay = (this as any).add.rectangle(0, 0, 800, 600, 0x0ea5e9, 0).setOrigin(0).setDepth(200);
-    this.shieldOverlay = (this as any).add.rectangle(0, 0, 800, 600, 0xfb923c, 0).setOrigin(0).setDepth(200);
+  const cam = (this as any).cameras.main;
+  const W = cam.width;
+  const H = cam.height;
 
-    this.snowEmitter = (this as any).add.particles(0, 0, ASSETS.IMAGES.EGG_WHITE, {
-        x: { min: -100, max: 800 },
-        y: { min: -100, max: -20 },
-        lifespan: 5000,
-        speedX: { min: 50, max: 120 },
-        speedY: { min: 50, max: 150 },
-        scale: { start: 0.1, end: 0.02 },
-        alpha: { start: 0.8, end: 0 },
-        quantity: 1,
-        frequency: 50,
-        emitting: false
-    });
-    this.snowEmitter.setDepth(201);
+  // base background (color). Stage PNG будет поверх/вместо через applyLevelConfig()
+  this.backgroundLayer = (this as any).add.rectangle(0, 0, W, H, 0x000000).setOrigin(0);
 
-    // Setup Background Music
-    const existingMusic = (this as any).sound.get('bg_music');
-    if (existingMusic) {
-        this.bgMusic = existingMusic;
-    } else if ((this as any).cache.audio.exists('bg_music')) {
-        // Only add if not present and asset is loaded
-        this.bgMusic = (this as any).sound.add('bg_music', { loop: true, volume: 0 });
-    }
+  this.ramps = new RampsSystem(this);
+  this.eggs = new EggMovementSystem(this, this.ramps);
+  this.boosts = new BoostsSystem(this);
 
-    this.setupBridgeListeners();
-    this.applyLevelConfig();
+  this.laneVisuals = (this as any).add.group();
+  this.createDragon();
 
-    // Use overlap event instead of position check
-    (this as any).events.on('EGG_CAUGHT', (egg: any) => this.handleCatch(egg));
-    (this as any).events.on('EGG_HIT_FLOOR', (egg: any) => this.handleMiss(egg));
+  // Overlays for Boosts (всегда размером с камеру)
+  this.freezeOverlay = (this as any).add.rectangle(0, 0, W, H, 0x0ea5e9, 0).setOrigin(0).setDepth(200);
+  this.shieldOverlay = (this as any).add.rectangle(0, 0, W, H, 0xfb923c, 0).setOrigin(0).setDepth(200);
 
-    this.resetGame();
+  this.snowEmitter = (this as any).add.particles(0, 0, ASSETS.IMAGES.EGG_WHITE, {
+    x: { min: -100, max: W },
+    y: { min: -100, max: -20 },
+    lifespan: 5000,
+    speedX: { min: 50, max: 120 },
+    speedY: { min: 50, max: 150 },
+    scale: { start: 0.1, end: 0.02 },
+    alpha: { start: 0.8, end: 0 },
+    quantity: 1,
+    frequency: 50,
+    emitting: false
+  });
+  this.snowEmitter.setDepth(201);
+
+  // Setup Background Music
+  const existingMusic = (this as any).sound.get('bg_music');
+  if (existingMusic) {
+    this.bgMusic = existingMusic;
+  } else if ((this as any).cache.audio.exists('bg_music')) {
+    this.bgMusic = (this as any).sound.add('bg_music', { loop: true, volume: 0 });
   }
+
+  this.setupBridgeListeners();
+  this.applyLevelConfig();
+
+  // Use overlap event instead of position check
+  (this as any).events.on('EGG_CAUGHT', (egg: any) => this.handleCatch(egg));
+  (this as any).events.on('EGG_HIT_FLOOR', (egg: any) => this.handleMiss(egg));
+
+  this.resetGame();
+}
 
   // Helper to determine max lives based on mode (Single vs Multiplayer) AND Iron Body
   private getMaxLives(): number {
@@ -190,20 +198,42 @@ const hopFrames = [
   duration: 600, // ✅ весь hop = 0.6 сек
   repeat: 0,
 });
-
-
 }
 
+private applyLevelConfig() {
+  // Cycle through level configs if we exceed the defined data
+  const config = LEVEL_DATA[this.currentLevelIndex % LEVEL_DATA.length];
 
+  // базовый фон по цвету (как было)
+  this.backgroundLayer.setFillStyle(config.bgColor);
 
-  private applyLevelConfig() {
-    // Cycle through level configs if we exceed the defined data
-    const config = LEVEL_DATA[this.currentLevelIndex % LEVEL_DATA.length];
-    this.backgroundLayer.setFillStyle(config.bgColor);
-    this.currentRampColor = config.rampColor;
-    this.eggs.setLevel(this.currentLevelIndex);
-    this.createRampVisuals(this.currentRampColor);
+  // Stage PNG: только для уровней 1..5
+  const stageLevel = this.currentLevelIndex + 1;
+  const stageKey = stageLevel >= 1 && stageLevel <= 5 ? `stage_${stageLevel}` : null;
+
+  if (stageKey) {
+    const cam = (this as any).cameras.main;
+
+    if (!this.stageBg) {
+      this.stageBg = (this as any).add.image(cam.centerX, cam.centerY, stageKey);
+      this.stageBg.setOrigin(0.5, 0.5);
+      this.stageBg.setDepth(-999); // на дно
+    } else {
+      this.stageBg.setTexture(stageKey);
+      this.stageBg.setVisible(true);
+      this.stageBg.setPosition(cam.centerX, cam.centerY);
+    }
+
+    this.stageBg.setDisplaySize(cam.width, cam.height);
+  } else {
+    // уровни > 5: PNG нет, оставляем цвет
+    if (this.stageBg) this.stageBg.setVisible(false);
   }
+
+  this.currentRampColor = config.rampColor;
+  this.eggs.setLevel(this.currentLevelIndex);
+  this.createRampVisuals(this.currentRampColor);
+}
 
   private createRampVisuals(color: number) {
     this.laneVisuals?.clear(true, true);
@@ -434,50 +464,45 @@ gameBridge.on('G_MOVE_DRAGON', (pos: RampPos) => {
       // For now, simple fixed target.
     });
   }
+private showDifficultyToast(hard: boolean) {
+  const cam = (this as any).cameras.main;
+  const W = cam.width;
+  const H = cam.height;
 
-  private showDifficultyToast(hard: boolean) {
-      if (this.state === 'WAITING_START') {
-           this.isHard = hard;
-           this.eggs.setHard(hard);
-           return;
-      }
-      const prevIsPaused = this.state === GameState.PAUSED;
-      if (!prevIsPaused) {
-          this.state = GameState.PAUSED;
-          (this as any).scene.pause();
-      }
+  const prevIsPaused = this.state === GameState.PAUSED;
 
-      const overlay = (this as any).add.rectangle(400, 300, 800, 600, hard ? 0xef4444 : 0x3b82f6, 0.3)
-          .setDepth(1000)
-          .setAlpha(0);
-
-      const text = (this as any).add.text(400, 300, hard ? "HARD MODE ON" : "EASY MODE ON", {
-          fontSize: '48px', fontWeight: '900', color: '#ffffff', stroke: '#000000', strokeThickness: 6
-      }).setOrigin(0.5).setDepth(1001).setAlpha(0);
-
-      (this as any).tweens.add({
-          targets: [overlay, text],
-          alpha: 1, duration: 300,
-          onComplete: () => {
-              (this as any).time.delayedCall(hard ? 1200 : 700, () => {
-                  (this as any).tweens.add({
-                      targets: [overlay, text],
-                      alpha: 0, duration: 300,
-                      onComplete: () => {
-                          overlay.destroy();
-                          text.destroy();
-                          this.isHard = hard;
-                          this.eggs.setHard(hard);
-                          if (!prevIsPaused) {
-                              this.state = GameState.PLAYING;
-                              (this as any).scene.resume();
-                          }
-                      }
-                  });
-              });
-          }
-      });
+  if (!prevIsPaused) {
+    this.state = GameState.PAUSED;
+    (this as any).scene.pause();
   }
+
+  const overlay = (this as any).add.rectangle(W / 2, H / 2, W, H, hard ? 0xef4444 : 0x3b82f6, 0.3)
+    .setDepth(1000)
+    .setAlpha(0);
+
+  const text = (this as any).add.text(W / 2, H / 2, hard ? "HARD MODE ON" : "EASY MODE ON", {
+    fontSize: '32px',
+    color: '#ffffff',
+    fontStyle: 'bold'
+  }).setOrigin(0.5).setDepth(1001).setAlpha(0);
+
+  (this as any).tweens.add({
+    targets: [overlay, text],
+    alpha: { from: 0, to: 1 },
+    duration: 150,
+    yoyo: true,
+    hold: 800,
+    onComplete: () => {
+      overlay.destroy();
+      text.destroy();
+
+      if (!prevIsPaused) {
+        this.state = GameState.PLAYING;
+        (this as any).scene.resume();
+      }
+    }
+  });
+}
 
   private startGameplay() {
     if (this.spawnEvent) this.spawnEvent.remove();
