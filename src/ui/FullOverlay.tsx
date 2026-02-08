@@ -36,62 +36,62 @@ export const FullOverlay: React.FC<FullOverlayProps> = ({ isFull, toggleFull, on
 
   const t = I18N[profile.language] || I18N.en;
 
-  // Enforce 2:1 game area in Telegram Full mode (mobile landscape only)
+   // Enforce Fullscreen geometry: do NOT reuse NormalMode positioning
   useLayoutEffect(() => {
-    if (!isFull) return;
-
-    const parent = document.getElementById('full-mount-parent');
+    const mount = document.getElementById('full-mount-parent');
     const shared = document.getElementById('game-shared-mount');
 
-    if (!parent || !shared) return;
+    if (!mount) return;
 
-    // Parent always centers content (safe for all)
-    Object.assign(parent.style, {
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center',
+    // Full overlay container must be a stable viewport
+    Object.assign(mount.style, {
+      position: 'relative',
+      display: 'block',
       width: '100%',
       height: '100%',
       overflow: 'hidden',
       backgroundColor: '#000',
     });
 
-    const applySize = () => {
-      // Only force 2:1 on phone-ish landscape (Telegram target)
-      // If not phone — keep previous behavior (100% fill)
-      const isLandscape = window.innerWidth > window.innerHeight;
-      const isPhoneLike = window.innerWidth < 900 && window.innerHeight < 520;
-
-      if (!(isLandscape && isPhoneLike)) {
-        shared.style.width = '100%';
-        shared.style.height = '100%';
-        return;
+    if (isFull) {
+      // ✅ HARD RESET for Full mode: pin to (0,0) and fill
+      if (shared) {
+        Object.assign(shared.style, {
+          position: 'absolute',
+          left: '0px',
+          top: '0px',
+          width: '100%',
+          height: '100%',
+          margin: '0',
+          transform: 'none',
+        });
       }
 
-      const pw = parent.clientWidth;
-      const ph = parent.clientHeight;
-
-      // Fit a 2:1 box into parent
-      const w = Math.min(pw, ph * 2);
-      const h = Math.floor(w / 2);
-
-      shared.style.width = `${Math.floor(w)}px`;
-      shared.style.height = `${h}px`;
-    };
-
-    applySize();
-
-    const ro = new ResizeObserver(() => applySize());
-    ro.observe(parent);
-
-    window.addEventListener('resize', applySize);
-
-    return () => {
-      ro.disconnect();
-      window.removeEventListener('resize', applySize);
-    };
+      // Canvas: allow Phaser Scale FIT to do its job; only cap by container
+      const canvas = mount.querySelector('canvas');
+      if (canvas) {
+        Object.assign((canvas as HTMLCanvasElement).style, {
+          maxWidth: '100%',
+          maxHeight: '100%',
+          margin: '0',
+          width: '',
+          height: '',
+          transform: 'none',
+        });
+      }
+    } else {
+      // Leaving full: clear inline overrides so NormalMode CSS can control layout
+      if (shared) {
+        shared.style.position = '';
+        shared.style.left = '';
+        shared.style.top = '';
+        shared.style.width = '';
+        shared.style.height = '';
+        shared.style.margin = '';
+        shared.style.transform = '';
+      }
+    }
   }, [isFull]);
-
 
   useEffect(() => {
     // Basic mobile check
