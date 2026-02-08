@@ -16,8 +16,16 @@ export class BootScene extends Phaser.Scene {
 
     // Core
     (this as any).load.image(ASSETS.IMAGES.BG, 'bg/background.png');
-    (this as any).load.image(ASSETS.IMAGES.DRAGON, 'dragon/dragon.png');
+
+    // Dragon as atlas (spritesheet + json)
+    (this as any).load.atlas(
+      ASSETS.IMAGES.DRAGON,
+      'dragon/dragon_move.png',
+      'dragon/dragon_move.json'
+    );
+
     (this as any).load.image(ASSETS.IMAGES.LANE, 'ui/lane.png');
+
 
     // Eggs
     (this as any).load.image(ASSETS.IMAGES.EGG_WHITE, 'eggs/egg_white.png');
@@ -80,13 +88,13 @@ export class BootScene extends Phaser.Scene {
       bg.generateTexture(ASSETS.IMAGES.BG, 800, 600);
     }
 
+        // NOTE: Dragon is loaded as an atlas in preload.
+    // If it's missing, we prefer to see an error rather than silently overriding it
+    // with a generated placeholder texture.
     if (!(this as any).textures.exists(ASSETS.IMAGES.DRAGON)) {
-      const dragon = (this as any).make.graphics({ x: 0, y: 0, add: false });
-      dragon.fillStyle(0x2c3327, 1);
-      dragon.fillRect(0, 0, 40, 40);
-      dragon.fillRect(30, 10, 15, 10);
-      dragon.generateTexture(ASSETS.IMAGES.DRAGON, 50, 50);
+      console.warn('[BootScene] Dragon atlas is missing:', ASSETS.IMAGES.DRAGON);
     }
+
 
     if (!(this as any).textures.exists(ASSETS.IMAGES.LANE)) {
       const lane = (this as any).make.graphics({ x: 0, y: 0, add: false });
