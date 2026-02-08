@@ -42,16 +42,18 @@ for r in range(GRID_ROWS):
         if len(xs) == 0 or len(ys) == 0:
             continue
 
-        xmin = max(x0 + int(xs.min()) - PAD, 0)
-        xmax = min(x0 + int(xs.max()) + PAD, W - 1)
-        ymin = max(y0 + int(ys.min()) - PAD, 0)
-        ymax = min(y0 + int(ys.max()) + PAD, H - 1)
+            # ВАЖНО: PAD не должен залезать в соседние клетки (иначе будет "bleed" снизу/сбоку)
+            xmin = max(x0 + int(xs.min()) - PAD, x0)
+            xmax = min(x0 + int(xs.max()) + PAD, x1)
+            ymin = max(y0 + int(ys.min()) - PAD, y0)
+            ymax = min(y0 + int(ys.max()) + PAD, y1)
 
-        name = f"f_{r}_{c}"
-        w = int(xmax - xmin + 1)
-        h = int(ymax - ymin + 1)
+            name = f"f_{r}_{c}"
+            w = int(xmax - xmin + 1)
+            h = int(ymax - ymin + 1)
 
-        frames[name] = {
+            frames[name] = {
+
             "frame": {"x": int(xmin), "y": int(ymin), "w": w, "h": h},
             "rotated": False,
             "trimmed": False,
