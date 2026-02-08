@@ -21,7 +21,8 @@ export class PlayScene extends Phaser.Scene {
   private magnetGlow!: Phaser.GameObjects.Graphics;
   private dragonSprite!: Phaser.GameObjects.Sprite;
   private dragonContainer!: Phaser.GameObjects.Container;
-
+  // чтобы не спамить прыжок при каждом тике/пересчёте
+  private dragonHopBusy = false;
   
   private freezeOverlay!: Phaser.GameObjects.Rectangle;
   private shieldOverlay!: Phaser.GameObjects.Rectangle;
@@ -122,23 +123,17 @@ export class PlayScene extends Phaser.Scene {
       return Math.min(calculated, absoluteMax);
   }
 
-  private createDragon() {
-  // glow / эффекты можно оставить
+private createDragon() {
+  // Градиент/глоу под драконом (для псевдоподсветок)
   this.magnetGlow = (this as any).add.graphics();
+  this.magnetGlow.setDepth(99);
 
-  // 👉 ОСНОВНОЙ ДРАКОН — СПРАЙТ ИЗ ATLAS
-  this.dragonSprite = (this as any).add.sprite(
-    0,
-    0,
-    ASSETS.IMAGES.DRAGON,
-    'f_0_0'
-  );
+  // Sprite из atlas (ключ = ASSETS.IMAGES.DRAGON, первый кадр = f_0_0)
+  this.dragonSprite = (this as any).add
+    .sprite(0, 0, ASSETS.IMAGES.DRAGON, 'f_0_0')
+    .setOrigin(0.5, 0.75);
 
-  this.dragonSprite.setOrigin(0.5, 0.5);
-  this.dragonSprite.setScale(1.0);
-  this.dragonSprite.setDepth(101);
-
-  // контейнер (если дальше логика его использует)
+  // Контейнер, чтобы мы могли скейлить/флипать всё разом (sprite + glow)
   this.dragonContainer = (this as any).add.container(0, 0, [
     this.magnetGlow,
     this.dragonSprite,
@@ -146,9 +141,43 @@ export class PlayScene extends Phaser.Scene {
 
   this.dragonContainer.setDepth(100);
 
-  // начальная позиция
+  // Создаём анимации 1 раз
+  this.ensureDragonAnims();
+
+  // По умолчанию — лёгкий “idle” (можно оставить только hop, если хочешь)
+  this.dragonSprite.play('dragon_idle');
+
+  // Позиционируем по текущему lane
   this.updateDragonPos();
 }
+private ensureDragonAnims() {
+  // чтобы не создавать анимации повторно
+  if ((this as any).anims.exists('dragon_hop')) return;
+
+  const frames: Phaser.Types.Animations.AnimationFrame[] = [];
+  for (let r = 0; r < 5; r++) {
+    for (let c = 0; c < 5; c++) {
+      frames.push({ key: ASSETS.IMAGES.DRAGON, frame: `f_${r}_${c}` });
+    }
+  }
+
+  // Быстрый hop (одно проигрывание)
+  (this as any).anims.create({
+    key: 'dragon_hop',
+    frames,
+    frameRate: 24,
+    repeat: 0,
+  });
+
+  // Медленный idle (чтобы “дышал”, можно выключить)
+  (this as any).anims.create({
+    key: 'dragon_idle',
+    frames,
+    frameRate: 10,
+    repeat: -1,
+  });
+}
+
 
 
   private applyLevelConfig() {
@@ -626,6 +655,26 @@ export class PlayScene extends Phaser.Scene {
   this.magnetGlow.fillStyle(color, baseAlpha * 0.25 * pulse);
   this.magnetGlow.fillCircle(0, 0, radius * 1.5);
 }
+private playDragonHop() {
+  if (!this.dragonSprite) return;
+  if (this.dragonHopBusy) return;
+
+  this.dragonHopBusy = true;
+
+  this.dragonSprite.play('dragon_hop');
+
+  this.dragonSprite.once(
+    Phaser.Animations.Events.ANIMATION_COMPLETE,
+    () => {
+      this.dragonHopBusy = false;
+
+      // вернём idle (или просто стопнем на первом кадре)
+      this.dragonSprite?.play('dragon_idle');
+      // или так:
+      // this.dragonSprite?.setFrame('f_0_0');
+    }
+  );
+}
 
 updateDragonPos() {
   if (!this.dragonContainer) return;
@@ -647,6 +696,7 @@ updateDragonPos() {
   const isLeft = lane === RampPos.LEFT_TOP || lane === RampPos.LEFT_BOT;
 
   this.dragonContainer.setScale(isLeft ? -baseScale : baseScale, baseScale);
+  this.playDragonHop();
 }
 
 
