@@ -8,6 +8,7 @@ JSON_OUT = "public/game/dragon/dragon_move.json"
 # Жёсткая сетка 5x5 (твой sheet 2048x2048)
 GRID_COLS = 5
 GRID_ROWS = 5
+CROP_BOTTOM_PX = 5  # сколько пикселей режем снизу кадра
 
 # Паддинг вокруг найденного bbox, чтобы не "срезать" контуры
 PAD = 2
@@ -41,7 +42,10 @@ for r in range(GRID_ROWS):
         xmin = x0
         ymin = y0
         w = int(x1 - x0 + 1)
-        h = int(y1 - y0 + 1)
+        h = int(y1 - y0 + 1) - CROP_BOTTOM_PX
+        h = max(h, 1)
+
+
 
         frames[name] = {
 
