@@ -172,7 +172,7 @@ const App: React.FC = () => {
         enterFullView();
     }, [isLoading, isOnboarded]);
 
-    // Fix: Reparent game canvas when mode changes OR when onboarding completes (DeviceShell mounts)
+  // Fix: Reparent game canvas when mode changes OR when onboarding completes (DeviceShell mounts)
   // P0: Added `isLoading` to dependency array to ensure canvas attaches when loading screen vanishes
   useEffect(() => {
     const targetId = isFull ? 'full-mount-parent' : 'shell-mount-parent';
@@ -186,10 +186,9 @@ const App: React.FC = () => {
     }
 
     // IMPORTANT:
-    // - Phaser.Scale.FIT writes canvas inline styles during refresh()
-    // - FullOverlay applies its own "cover" transform in Full mode
-    // If refresh() happens AFTER cover(), the canvas may "fall" to bottom-right.
-    // So we (1) refresh after DOM settles, then (2) notify FullOverlay to re-apply cover.
+    // Phaser.Scale.FIT (scale.refresh) rewrites canvas inline styles.
+    // FullOverlay applies "cover" via transform. If refresh happens AFTER cover, canvas can "fall" to a corner.
+    // So: refresh AFTER DOM settles, then notify FullOverlay to re-apply cover AFTER Phaser is done.
     let rafA = 0;
     let rafB = 0;
     let rafC = 0;
@@ -211,7 +210,6 @@ const App: React.FC = () => {
       cancelAnimationFrame(rafC);
     };
   }, [isFull, isOnboarded, isLoading]);
-
 
     const requestTelegramFullscreenBestEffort = () => {
         try {

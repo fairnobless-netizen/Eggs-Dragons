@@ -36,16 +36,12 @@ export const FullOverlay: React.FC<FullOverlayProps> = ({ isFull, toggleFull, on
 
   const t = I18N[profile.language] || I18N.en;
   // Enforce Fullscreen geometry: do NOT reuse NormalMode positioning
-  // Root cause of the "falls to bottom-right" bug:
-  // Phaser.Scale.FIT writes inline canvas styles during scale.refresh().
-  // If refresh() runs AFTER our cover transform, it overwrites our geometry.
-  // App.tsx now dispatches PHASER_REFRESHED after each refresh; we re-apply cover on that event.
+  // Enforce Fullscreen geometry: do NOT reuse NormalMode positioning
   useLayoutEffect(() => {
     const mount = document.getElementById('full-mount-parent');
     const shared = document.getElementById('game-shared-mount');
     if (!mount || !shared) return;
 
-    // Always keep full mount stable
     Object.assign(mount.style, {
       position: 'relative',
       width: '100%',
@@ -53,6 +49,10 @@ export const FullOverlay: React.FC<FullOverlayProps> = ({ isFull, toggleFull, on
       overflow: 'hidden',
       backgroundColor: '#000',
     });
+
+    const getCanvas = () =>
+      (shared.querySelector('canvas') as HTMLCanvasElement | null) ??
+      (mount.querySelector('canvas') as HTMLCanvasElement | null);
 
     const clearCanvasInline = (c: HTMLCanvasElement | null) => {
       if (!c) return;
@@ -77,18 +77,12 @@ export const FullOverlay: React.FC<FullOverlayProps> = ({ isFull, toggleFull, on
       shared.style.transform = '';
     };
 
-    const getCanvas = () =>
-      (shared.querySelector('canvas') as HTMLCanvasElement | null) ??
-      (mount.querySelector('canvas') as HTMLCanvasElement | null);
-
     if (!isFull) {
-      // Leaving full: remove inline overrides so NormalMode CSS can control layout
       clearCanvasInline(getCanvas());
       clearSharedInline();
       return;
     }
 
-    // Entering full: hard reset shared container (prevents "falling" to bottom-right)
     Object.assign(shared.style, {
       position: 'absolute',
       left: '0px',
@@ -99,7 +93,6 @@ export const FullOverlay: React.FC<FullOverlayProps> = ({ isFull, toggleFull, on
       transform: 'none',
     });
 
-    // Canvas cover: fill screen by width/height without distortion, crop if needed
     const applyCover = () => {
       const c = getCanvas();
       if (!c) return;
@@ -124,43 +117,46 @@ export const FullOverlay: React.FC<FullOverlayProps> = ({ isFull, toggleFull, on
       });
     };
 
-    // Important: when switching Normal->Full, layout settles in 1–2 frames
+    // 1) settle DOM, 2) apply cover twice
     let rafA = 0;
     let rafB = 0;
     rafA = requestAnimationFrame(() => {
       rafB = requestAnimationFrame(() => {
         applyCover();
+        requestAnimationFrame(applyCover);
       });
     });
 
-    const onResize = () => applyCover();
+    // Re-apply cover AFTER Phaser refresh (the real missing piece)
     const onPhaserRefreshed = () => applyCover();
+    window.addEventListener('PHASER_REFRESHED', onPhaserRefreshed as any);
+
+    const onResize = () => applyCover();
     window.addEventListener('resize', onResize);
     window.addEventListener('orientationchange', onResize);
-    window.addEventListener('PHASER_REFRESHED', onPhaserRefreshed as any);
 
     const roMount = new ResizeObserver(() => applyCover());
     roMount.observe(mount);
 
-    // Also observe the canvas itself: Phaser.Scale.FIT may resize it without changing mount rect
+    // Watch canvas too: Phaser may resize it without mount rect changes
     const roCanvas = new ResizeObserver(() => applyCover());
     const c0 = getCanvas();
     if (c0) roCanvas.observe(c0);
 
-    // small delayed pass for iOS/Telegram webview
-    const timeoutId = window.setTimeout(applyCover, 80);
+    const t = window.setTimeout(applyCover, 120);
 
     return () => {
       cancelAnimationFrame(rafA);
       cancelAnimationFrame(rafB);
-      window.clearTimeout(timeoutId);
+      window.clearTimeout(t);
+
+      window.removeEventListener('PHASER_REFRESHED', onPhaserRefreshed as any);
       window.removeEventListener('resize', onResize);
       window.removeEventListener('orientationchange', onResize);
-      window.removeEventListener('PHASER_REFRESHED', onPhaserRefreshed as any);
+
       roMount.disconnect();
       roCanvas.disconnect();
 
-      // cleanup inline styles (otherwise next mode inherits wrong geometry)
       clearCanvasInline(getCanvas());
       clearSharedInline();
     };
