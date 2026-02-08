@@ -20,8 +20,7 @@ export class RampsSystem {
     // If fullscreen dynamic changes are needed later, add logic here.
     this.configure();
   }
-
-  private configure() {
+private configure() {
   const w = GAME_CONFIG.WIDTH; // 800
   const h = GAME_CONFIG.HEIGHT; // 600
 
@@ -104,6 +103,7 @@ export class RampsSystem {
     [RampPos.RIGHT_BOT]: new Phaser.Math.Vector2(Rx_Catch, Catch_Y_Bot),
   };
 }
+
 
   getPosition(lane: RampPos, t: number): Phaser.Math.Vector2 {
     return this.tracks[lane].getPoint(t);
