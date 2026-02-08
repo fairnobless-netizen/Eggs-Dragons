@@ -627,17 +627,26 @@ export class PlayScene extends Phaser.Scene {
   this.magnetGlow.fillCircle(0, 0, radius * 1.5);
 }
 
+updateDragonPos() {
+  if (!this.dragonContainer) return;
 
-  updateDragonPos() {
-  const catchPos = this.ramps.getDragonCatchPosition(this.dragonLane);
+  const lane = this.dragonLane;
+  const pos = this.ramps.getDragonCatchPosition(lane);
 
-  this.dragonContainer.setPosition(catchPos.x, catchPos.y);
+  this.dragonContainer.setPosition(pos.x, pos.y);
 
-  const flip =
-    this.dragonLane === RampPos.RIGHT_TOP ||
-    this.dragonLane === RampPos.RIGHT_BOT;
+  // Делаем дракона на 10% меньше
+  const baseScale = 0.9;
 
-  this.dragonContainer.setScale(flip ? -1 : 1, 1);
+  /**
+   * Наш спрайт СМОТРИТ ВПРАВО по умолчанию.
+   * Значит:
+   * - на ЛЕВЫХ рампах зеркалим (чтобы смотрел влево к рампе)
+   * - на ПРАВЫХ оставляем как есть
+   */
+  const isLeft = lane === RampPos.LEFT_TOP || lane === RampPos.LEFT_BOT;
+
+  this.dragonContainer.setScale(isLeft ? -baseScale : baseScale, baseScale);
 }
 
 
