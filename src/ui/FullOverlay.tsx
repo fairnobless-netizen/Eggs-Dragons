@@ -36,7 +36,6 @@ export const FullOverlay: React.FC<FullOverlayProps> = ({ isFull, toggleFull, on
 
   const t = I18N[profile.language] || I18N.en;
 
-  // Enforce Fullscreen geometry: do NOT reuse NormalMode positioning
 // Enforce Fullscreen geometry: do NOT reuse NormalMode positioning
 useLayoutEffect(() => {
   const mount = document.getElementById('full-mount-parent');
@@ -82,14 +81,10 @@ useLayoutEffect(() => {
     shared.style.transform = '';
   };
 
-  // Helper: enforce shared container as full-bleed layer in fullscreen
   const enforceSharedFull = () => {
     Object.assign(shared.style, {
       position: 'absolute',
-      left: '0px',
-      top: '0px',
-      right: '0px',
-      bottom: '0px',
+      inset: '0px',
       width: '100%',
       height: '100%',
       margin: '0',
@@ -109,9 +104,6 @@ useLayoutEffect(() => {
     const c = getCanvas();
     if (!c) return;
 
-    // IMPORTANT:
-    // Use CSS rects, not canvas.width/height.
-    // Phaser.Scale.FIT often updates CSS size & positions, while internal canvas width/height can be base.
     const mountRect = mount.getBoundingClientRect();
     const canvasRect = c.getBoundingClientRect();
 
@@ -122,23 +114,19 @@ useLayoutEffect(() => {
 
     if (!mw || !mh || !cw || !ch) return;
 
-    // Reset Phaser-injected positioning that can cause "corner stick"
-    // (we do it every time because Phaser may rewrite during refresh)
+    const scale = Math.max(mw / cw, mh / ch);
+
+    // Hard reset Phaser-injected positioning (prevents “sticking” to corner)
     c.style.left = '';
     c.style.top = '';
     c.style.right = '';
     c.style.bottom = '';
     c.style.margin = '';
-    c.style.transform = '';
-    c.style.transformOrigin = '';
-
-    const scale = Math.max(mw / cw, mh / ch);
 
     Object.assign(c.style, {
       position: 'absolute',
       left: '50%',
       top: '50%',
-      // keep current CSS size as the base; only transform scales it
       width: `${cw}px`,
       height: `${ch}px`,
       margin: '0',
@@ -148,30 +136,27 @@ useLayoutEffect(() => {
     });
   };
 
-  // settle DOM -> apply cover (multiple passes)
+  // settle DOM -> apply cover twice
   let raf1 = 0;
   let raf2 = 0;
-  let raf3 = 0;
-
   raf1 = requestAnimationFrame(() => {
     raf2 = requestAnimationFrame(() => {
       applyCover();
-      raf3 = requestAnimationFrame(() => applyCover());
+      requestAnimationFrame(applyCover);
     });
   });
-
-  // Re-apply cover AFTER Phaser refresh (critical)
-  const onPhaserRefreshed = () => {
-    enforceSharedFull();
-    // two passes because Phaser can touch styles during the same frame
-    applyCover();
-    requestAnimationFrame(applyCover);
-  };
-  window.addEventListener('PHASER_REFRESHED', onPhaserRefreshed as any);
 
   const onResize = () => applyCover();
   window.addEventListener('resize', onResize);
   window.addEventListener('orientationchange', onResize);
+
+  // After Phaser refresh, re-apply cover (critical)
+  const onPhaserRefreshed = () => {
+    enforceSharedFull();
+    applyCover();
+    requestAnimationFrame(applyCover);
+  };
+  window.addEventListener('PHASER_REFRESHED', onPhaserRefreshed as any);
 
   const roMount = new ResizeObserver(() => applyCover());
   roMount.observe(mount);
@@ -188,12 +173,11 @@ useLayoutEffect(() => {
   return () => {
     cancelAnimationFrame(raf1);
     cancelAnimationFrame(raf2);
-    cancelAnimationFrame(raf3);
     window.clearTimeout(t);
 
-    window.removeEventListener('PHASER_REFRESHED', onPhaserRefreshed as any);
     window.removeEventListener('resize', onResize);
     window.removeEventListener('orientationchange', onResize);
+    window.removeEventListener('PHASER_REFRESHED', onPhaserRefreshed as any);
 
     roMount.disconnect();
     roCanvas.disconnect();
@@ -202,8 +186,6 @@ useLayoutEffect(() => {
     clearSharedInline();
   };
 }, [isFull]);
-
-
 
   useEffect(() => {
     // Basic mobile check

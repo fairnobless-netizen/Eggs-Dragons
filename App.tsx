@@ -180,13 +180,11 @@ useEffect(() => {
 
   if (!target || !sharedMountRef.current) return;
 
-  // Only append if not already there to avoid unnecessary moves
   if (sharedMountRef.current.parentElement !== target) {
     target.appendChild(sharedMountRef.current);
   }
 
-  // KEY:
-  // Phaser scale.refresh() rewrites canvas inline styles. We must re-apply FullOverlay cover AFTER that.
+  // Phaser rewrites canvas CSS during refresh(); we must re-apply cover AFTER that.
   let raf1 = 0;
   let raf2 = 0;
   let raf3 = 0;
@@ -311,11 +309,18 @@ useEffect(() => {
       )}
 
       {isOnboarded && isFull && (
-        <div className="full-screen-wrapper">
-          <div id="full-mount-parent" style={{ position: 'absolute', inset: 0, zIndex: 0 }} />
-          <FullOverlay isFull={isFull} toggleFull={toggleFull} onOpenSettings={handleOpenSettings} hasStarted={hasStarted} onStart={handleStartGame} />
-        </div>
-      )}
+  <div className="full-screen-wrapper">
+    <div id="full-mount-parent" />
+    <FullOverlay
+      isFull={isFull}
+      toggleFull={toggleFull}
+      onOpenSettings={handleOpenSettings}
+      hasStarted={hasStarted}
+      onStart={handleStartGame}
+    />
+  </div>
+)}
+
 
       <StoreModal 
         isOpen={overlay === 'store'} 
