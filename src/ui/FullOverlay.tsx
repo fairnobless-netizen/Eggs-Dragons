@@ -35,132 +35,175 @@ export const FullOverlay: React.FC<FullOverlayProps> = ({ isFull, toggleFull, on
   const [isPortrait, setIsPortrait] = useState(false);
 
   const t = I18N[profile.language] || I18N.en;
+
   // Enforce Fullscreen geometry: do NOT reuse NormalMode positioning
-  // Enforce Fullscreen geometry: do NOT reuse NormalMode positioning
-  useLayoutEffect(() => {
-    const mount = document.getElementById('full-mount-parent');
-    const shared = document.getElementById('game-shared-mount');
-    if (!mount || !shared) return;
+// Enforce Fullscreen geometry: do NOT reuse NormalMode positioning
+useLayoutEffect(() => {
+  const mount = document.getElementById('full-mount-parent');
+  const shared = document.getElementById('game-shared-mount');
+  if (!mount || !shared) return;
 
-    Object.assign(mount.style, {
-      position: 'relative',
-      width: '100%',
-      height: '100%',
-      overflow: 'hidden',
-      backgroundColor: '#000',
-    });
+  Object.assign(mount.style, {
+    position: 'relative',
+    width: '100%',
+    height: '100%',
+    overflow: 'hidden',
+    backgroundColor: '#000',
+  });
 
-    const getCanvas = () =>
-      (shared.querySelector('canvas') as HTMLCanvasElement | null) ??
-      (mount.querySelector('canvas') as HTMLCanvasElement | null);
+  const getCanvas = () =>
+    (shared.querySelector('canvas') as HTMLCanvasElement | null) ??
+    (mount.querySelector('canvas') as HTMLCanvasElement | null);
 
-    const clearCanvasInline = (c: HTMLCanvasElement | null) => {
-      if (!c) return;
-      c.style.position = '';
-      c.style.left = '';
-      c.style.top = '';
-      c.style.width = '';
-      c.style.height = '';
-      c.style.margin = '';
-      c.style.display = '';
-      c.style.transformOrigin = '';
-      c.style.transform = '';
-    };
+  const clearCanvasInline = (c: HTMLCanvasElement | null) => {
+    if (!c) return;
+    c.style.position = '';
+    c.style.left = '';
+    c.style.top = '';
+    c.style.right = '';
+    c.style.bottom = '';
+    c.style.width = '';
+    c.style.height = '';
+    c.style.margin = '';
+    c.style.display = '';
+    c.style.transformOrigin = '';
+    c.style.transform = '';
+  };
 
-    const clearSharedInline = () => {
-      shared.style.position = '';
-      shared.style.left = '';
-      shared.style.top = '';
-      shared.style.width = '';
-      shared.style.height = '';
-      shared.style.margin = '';
-      shared.style.transform = '';
-    };
+  const clearSharedInline = () => {
+    shared.style.position = '';
+    shared.style.left = '';
+    shared.style.top = '';
+    shared.style.right = '';
+    shared.style.bottom = '';
+    shared.style.width = '';
+    shared.style.height = '';
+    shared.style.margin = '';
+    shared.style.transform = '';
+  };
 
-    if (!isFull) {
-      clearCanvasInline(getCanvas());
-      clearSharedInline();
-      return;
-    }
-
+  // Helper: enforce shared container as full-bleed layer in fullscreen
+  const enforceSharedFull = () => {
     Object.assign(shared.style, {
       position: 'absolute',
       left: '0px',
       top: '0px',
+      right: '0px',
+      bottom: '0px',
       width: '100%',
       height: '100%',
       margin: '0',
       transform: 'none',
     });
+  };
 
-    const applyCover = () => {
-      const c = getCanvas();
-      if (!c) return;
+  if (!isFull) {
+    clearCanvasInline(getCanvas());
+    clearSharedInline();
+    return;
+  }
 
-      const rect = mount.getBoundingClientRect();
-      const cw = c.width || c.getBoundingClientRect().width;
-      const ch = c.height || c.getBoundingClientRect().height;
-      if (!cw || !ch || !rect.width || !rect.height) return;
+  enforceSharedFull();
 
-      const scale = Math.max(rect.width / cw, rect.height / ch);
+  const applyCover = () => {
+    const c = getCanvas();
+    if (!c) return;
 
-      Object.assign(c.style, {
-        position: 'absolute',
-        left: '50%',
-        top: '50%',
-        width: `${cw}px`,
-        height: `${ch}px`,
-        margin: '0',
-        display: 'block',
-        transformOrigin: '50% 50%',
-        transform: `translate(-50%, -50%) scale(${scale})`,
-      });
-    };
+    // IMPORTANT:
+    // Use CSS rects, not canvas.width/height.
+    // Phaser.Scale.FIT often updates CSS size & positions, while internal canvas width/height can be base.
+    const mountRect = mount.getBoundingClientRect();
+    const canvasRect = c.getBoundingClientRect();
 
-    // 1) settle DOM, 2) apply cover twice
-    let rafA = 0;
-    let rafB = 0;
-    rafA = requestAnimationFrame(() => {
-      rafB = requestAnimationFrame(() => {
-        applyCover();
-        requestAnimationFrame(applyCover);
-      });
+    const mw = mountRect.width;
+    const mh = mountRect.height;
+    const cw = canvasRect.width;
+    const ch = canvasRect.height;
+
+    if (!mw || !mh || !cw || !ch) return;
+
+    // Reset Phaser-injected positioning that can cause "corner stick"
+    // (we do it every time because Phaser may rewrite during refresh)
+    c.style.left = '';
+    c.style.top = '';
+    c.style.right = '';
+    c.style.bottom = '';
+    c.style.margin = '';
+    c.style.transform = '';
+    c.style.transformOrigin = '';
+
+    const scale = Math.max(mw / cw, mh / ch);
+
+    Object.assign(c.style, {
+      position: 'absolute',
+      left: '50%',
+      top: '50%',
+      // keep current CSS size as the base; only transform scales it
+      width: `${cw}px`,
+      height: `${ch}px`,
+      margin: '0',
+      display: 'block',
+      transformOrigin: '50% 50%',
+      transform: `translate(-50%, -50%) scale(${scale})`,
     });
+  };
 
-    // Re-apply cover AFTER Phaser refresh (the real missing piece)
-    const onPhaserRefreshed = () => applyCover();
-    window.addEventListener('PHASER_REFRESHED', onPhaserRefreshed as any);
+  // settle DOM -> apply cover (multiple passes)
+  let raf1 = 0;
+  let raf2 = 0;
+  let raf3 = 0;
 
-    const onResize = () => applyCover();
-    window.addEventListener('resize', onResize);
-    window.addEventListener('orientationchange', onResize);
+  raf1 = requestAnimationFrame(() => {
+    raf2 = requestAnimationFrame(() => {
+      applyCover();
+      raf3 = requestAnimationFrame(() => applyCover());
+    });
+  });
 
-    const roMount = new ResizeObserver(() => applyCover());
-    roMount.observe(mount);
+  // Re-apply cover AFTER Phaser refresh (critical)
+  const onPhaserRefreshed = () => {
+    enforceSharedFull();
+    // two passes because Phaser can touch styles during the same frame
+    applyCover();
+    requestAnimationFrame(applyCover);
+  };
+  window.addEventListener('PHASER_REFRESHED', onPhaserRefreshed as any);
 
-    // Watch canvas too: Phaser may resize it without mount rect changes
-    const roCanvas = new ResizeObserver(() => applyCover());
-    const c0 = getCanvas();
-    if (c0) roCanvas.observe(c0);
+  const onResize = () => applyCover();
+  window.addEventListener('resize', onResize);
+  window.addEventListener('orientationchange', onResize);
 
-    const t = window.setTimeout(applyCover, 120);
+  const roMount = new ResizeObserver(() => applyCover());
+  roMount.observe(mount);
 
-    return () => {
-      cancelAnimationFrame(rafA);
-      cancelAnimationFrame(rafB);
-      window.clearTimeout(t);
+  const roCanvas = new ResizeObserver(() => applyCover());
+  const c0 = getCanvas();
+  if (c0) roCanvas.observe(c0);
 
-      window.removeEventListener('PHASER_REFRESHED', onPhaserRefreshed as any);
-      window.removeEventListener('resize', onResize);
-      window.removeEventListener('orientationchange', onResize);
+  const t = window.setTimeout(() => {
+    enforceSharedFull();
+    applyCover();
+  }, 120);
 
-      roMount.disconnect();
-      roCanvas.disconnect();
+  return () => {
+    cancelAnimationFrame(raf1);
+    cancelAnimationFrame(raf2);
+    cancelAnimationFrame(raf3);
+    window.clearTimeout(t);
 
-      clearCanvasInline(getCanvas());
-      clearSharedInline();
-    };
-  }, [isFull]);
+    window.removeEventListener('PHASER_REFRESHED', onPhaserRefreshed as any);
+    window.removeEventListener('resize', onResize);
+    window.removeEventListener('orientationchange', onResize);
+
+    roMount.disconnect();
+    roCanvas.disconnect();
+
+    clearCanvasInline(getCanvas());
+    clearSharedInline();
+  };
+}, [isFull]);
+
+
 
   useEffect(() => {
     // Basic mobile check

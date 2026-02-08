@@ -172,44 +172,42 @@ const App: React.FC = () => {
         enterFullView();
     }, [isLoading, isOnboarded]);
 
-  // Fix: Reparent game canvas when mode changes OR when onboarding completes (DeviceShell mounts)
-  // P0: Added `isLoading` to dependency array to ensure canvas attaches when loading screen vanishes
-  useEffect(() => {
-    const targetId = isFull ? 'full-mount-parent' : 'shell-mount-parent';
-    const target = document.getElementById(targetId);
+// Fix: Reparent game canvas when mode changes OR when onboarding completes (DeviceShell mounts)
+// P0: Added `isLoading` to dependency array to ensure canvas attaches when loading screen vanishes
+useEffect(() => {
+  const targetId = isFull ? 'full-mount-parent' : 'shell-mount-parent';
+  const target = document.getElementById(targetId);
 
-    if (!target || !sharedMountRef.current) return;
+  if (!target || !sharedMountRef.current) return;
 
-    // Only append if not already there to avoid unnecessary moves
-    if (sharedMountRef.current.parentElement !== target) {
-      target.appendChild(sharedMountRef.current);
-    }
+  // Only append if not already there to avoid unnecessary moves
+  if (sharedMountRef.current.parentElement !== target) {
+    target.appendChild(sharedMountRef.current);
+  }
 
-    // IMPORTANT:
-    // Phaser.Scale.FIT (scale.refresh) rewrites canvas inline styles.
-    // FullOverlay applies "cover" via transform. If refresh happens AFTER cover, canvas can "fall" to a corner.
-    // So: refresh AFTER DOM settles, then notify FullOverlay to re-apply cover AFTER Phaser is done.
-    let rafA = 0;
-    let rafB = 0;
-    let rafC = 0;
+  // KEY:
+  // Phaser scale.refresh() rewrites canvas inline styles. We must re-apply FullOverlay cover AFTER that.
+  let raf1 = 0;
+  let raf2 = 0;
+  let raf3 = 0;
 
-    rafA = requestAnimationFrame(() => {
-      rafB = requestAnimationFrame(() => {
-        if (gameRef.current) {
-          gameRef.current.scale.refresh();
-        }
-        rafC = requestAnimationFrame(() => {
-          window.dispatchEvent(new CustomEvent('PHASER_REFRESHED', { detail: { isFull } }));
-        });
+  raf1 = requestAnimationFrame(() => {
+    raf2 = requestAnimationFrame(() => {
+      if (gameRef.current) {
+        gameRef.current.scale.refresh();
+      }
+      raf3 = requestAnimationFrame(() => {
+        window.dispatchEvent(new CustomEvent('PHASER_REFRESHED', { detail: { isFull } }));
       });
     });
+  });
 
-    return () => {
-      cancelAnimationFrame(rafA);
-      cancelAnimationFrame(rafB);
-      cancelAnimationFrame(rafC);
-    };
-  }, [isFull, isOnboarded, isLoading]);
+  return () => {
+    cancelAnimationFrame(raf1);
+    cancelAnimationFrame(raf2);
+    cancelAnimationFrame(raf3);
+  };
+}, [isFull, isOnboarded, isLoading]);
 
     const requestTelegramFullscreenBestEffort = () => {
         try {
