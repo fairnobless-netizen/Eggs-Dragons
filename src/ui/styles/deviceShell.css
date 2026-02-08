@@ -320,7 +320,8 @@ canvas {
 /* ========================================= */
 /* MOBILE LANDSCAPE RESPONSIVE OVERRIDES     */
 /* ========================================= */
-@media (max-width: 900px) and (orientation: landscape), (max-height: 520px) {
+@media (max-width: 900px) and (orientation: landscape) and (pointer: coarse) {
+
   /* UI: Root Container matches viewport */
   .device-shell {
     width: 100vw;
