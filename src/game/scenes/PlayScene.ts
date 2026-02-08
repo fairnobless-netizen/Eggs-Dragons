@@ -161,21 +161,36 @@ private ensureDragonAnims() {
     }
   }
 
-  // === HOP: все 25 кадров за 0.6 секунды ===
-(this as any).anims.create({
-  key: 'dragon_hop',
-  frames,          // все кадры атласа
-  duration: 600,   // ✅ ВЕСЬ прыжок = 0.6 сек
-  repeat: 0,       // проигрывается ОДИН раз
-});
+// helper: получить кадр по row/col
+const F = (r: number, c: number) => ({ key: ASSETS.IMAGES.DRAGON, frame: `f_${r}_${c}` });
 
-// === IDLE: СТАТИЧНЫЙ (один кадр, без движения) ===
+// === IDLE: статичный кадр (4-й элемент 1-го ряда = f_0_3) ===
 (this as any).anims.create({
   key: 'dragon_idle',
-  frames: [frames[0]], // ✅ ТОЛЬКО первый кадр
+  frames: [F(0, 3)],
   frameRate: 1,
   repeat: -1,
 });
+
+// === HOP: один “прыжок” (только выбранные кадры) ===
+const hopFrames = [
+  F(0, 3), F(0, 4),
+
+  F(1, 0), F(1, 1), F(1, 2), F(1, 3), F(1, 4),
+
+  F(2, 0), F(2, 1), F(2, 2), F(2, 3), F(2, 4),
+
+  // можно закончить на 3-м элементе 4-го ряда (f_3_2)
+  F(3, 0), F(3, 1), F(3, 2),
+];
+
+(this as any).anims.create({
+  key: 'dragon_hop',
+  frames: hopFrames,
+  duration: 600, // ✅ весь hop = 0.6 сек
+  repeat: 0,
+});
+
 
 }
 
@@ -689,7 +704,7 @@ private playDragonHop() {
       // вернёмся в статичный idle
       this.dragonSprite?.play('dragon_idle');
       // на всякий случай “зафиксируем” кадр:
-      this.dragonSprite?.setFrame('f_0_0');
+      this.dragonSprite?.setFrame('f_0_3');
     }
   );
 }
