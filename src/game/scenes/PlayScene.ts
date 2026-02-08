@@ -74,7 +74,11 @@ export class PlayScene extends Phaser.Scene {
   const H = cam.height;
 
   // base background (color). Stage PNG будет поверх/вместо через applyLevelConfig()
-  this.backgroundLayer = (this as any).add.rectangle(0, 0, W, H, 0x000000).setOrigin(0);
+    this.backgroundLayer = (this as any)
+    .add.rectangle(0, 0, W, H, 0x000000)
+    .setOrigin(0)
+    .setDepth(-1000); // ✅ ниже stageBg
+
 
   this.ramps = new RampsSystem(this);
   this.eggs = new EggMovementSystem(this, this.ramps);
@@ -207,28 +211,32 @@ private applyLevelConfig() {
   // базовый фон по цвету (как было)
   this.backgroundLayer.setFillStyle(config.bgColor);
 
-  // Stage PNG: только для уровней 1..5
+    // Stage PNG: уровни 1..5 = stage_1..stage_5, уровни 6+ = stage_5
   const stageLevel = this.currentLevelIndex + 1;
-  const stageKey = stageLevel >= 1 && stageLevel <= 5 ? `stage_${stageLevel}` : null;
+  const stageNum = Math.min(Math.max(stageLevel, 1), 5);
+  const stageKey = `stage_${stageNum}`;
 
-  if (stageKey) {
+  // показываем PNG только если он реально загружен
+  if ((this as any).textures.exists(stageKey)) {
     const cam = (this as any).cameras.main;
 
     if (!this.stageBg) {
       this.stageBg = (this as any).add.image(cam.centerX, cam.centerY, stageKey);
       this.stageBg.setOrigin(0.5, 0.5);
-      this.stageBg.setDepth(-999); // на дно
+      this.stageBg.setDepth(-999); // ✅ над backgroundLayer (-1000)
     } else {
       this.stageBg.setTexture(stageKey);
       this.stageBg.setVisible(true);
       this.stageBg.setPosition(cam.centerX, cam.centerY);
     }
 
+    // растягиваем под камеру (пока так; потом можно сделать contain)
     this.stageBg.setDisplaySize(cam.width, cam.height);
   } else {
-    // уровни > 5: PNG нет, оставляем цвет
+    // если текстуры нет — оставляем цвет
     if (this.stageBg) this.stageBg.setVisible(false);
   }
+
 
   this.currentRampColor = config.rampColor;
   this.eggs.setLevel(this.currentLevelIndex);
