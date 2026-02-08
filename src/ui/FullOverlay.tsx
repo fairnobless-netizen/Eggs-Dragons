@@ -100,24 +100,28 @@ useLayoutEffect(() => {
 
   enforceSharedFull();
 
+  // COVER logic:
+  // - centered
+  // - fill by wide side (and if needed by height)
+  // - allow crop top/bottom (or left/right) -> "cover"
+  // - IMPORTANT: compute from CSS rect only (Phaser FIT uses CSS sizing)
   const applyCover = () => {
     const c = getCanvas();
     if (!c) return;
 
-    // KEY: use CSS rect, not canvas.width/height (Phaser FIT updates CSS size)
-    const mountRect = mount.getBoundingClientRect();
-    const canvasRect = c.getBoundingClientRect();
+    const m = mount.getBoundingClientRect();
+    const r = c.getBoundingClientRect();
 
-    const mw = mountRect.width;
-    const mh = mountRect.height;
-    const cw = canvasRect.width;
-    const ch = canvasRect.height;
+    const mw = m.width;
+    const mh = m.height;
+    const cw = r.width;
+    const ch = r.height;
 
     if (!mw || !mh || !cw || !ch) return;
 
     const scale = Math.max(mw / cw, mh / ch);
 
-    // Hard reset Phaser injected positioning (prevents sticking / staying small)
+    // hard reset any Phaser positioning that can "stick" to corner
     c.style.left = '';
     c.style.top = '';
     c.style.right = '';
@@ -128,6 +132,7 @@ useLayoutEffect(() => {
       position: 'absolute',
       left: '50%',
       top: '50%',
+      // Keep current CSS size as base; transform scales to cover
       width: `${cw}px`,
       height: `${ch}px`,
       margin: '0',
@@ -137,7 +142,7 @@ useLayoutEffect(() => {
     });
   };
 
-  // Settle DOM then apply
+  // 1) settle DOM 2) apply twice
   let raf1 = 0;
   let raf2 = 0;
   raf1 = requestAnimationFrame(() => {
@@ -147,17 +152,17 @@ useLayoutEffect(() => {
     });
   });
 
-  const onResize = () => applyCover();
-  window.addEventListener('resize', onResize);
-  window.addEventListener('orientationchange', onResize);
-
-  // CRITICAL: after Phaser refresh, re-apply cover
+  // After Phaser refresh, ALWAYS re-apply cover
   const onPhaserRefreshed = () => {
     enforceSharedFull();
     applyCover();
     requestAnimationFrame(applyCover);
   };
   window.addEventListener('PHASER_REFRESHED', onPhaserRefreshed as any);
+
+  const onResize = () => applyCover();
+  window.addEventListener('resize', onResize);
+  window.addEventListener('orientationchange', onResize);
 
   const roMount = new ResizeObserver(() => applyCover());
   roMount.observe(mount);
@@ -176,9 +181,9 @@ useLayoutEffect(() => {
     cancelAnimationFrame(raf2);
     window.clearTimeout(t);
 
+    window.removeEventListener('PHASER_REFRESHED', onPhaserRefreshed as any);
     window.removeEventListener('resize', onResize);
     window.removeEventListener('orientationchange', onResize);
-    window.removeEventListener('PHASER_REFRESHED', onPhaserRefreshed as any);
 
     roMount.disconnect();
     roCanvas.disconnect();
@@ -187,6 +192,7 @@ useLayoutEffect(() => {
     clearSharedInline();
   };
 }, [isFull]);
+
 
   useEffect(() => {
     // Basic mobile check
