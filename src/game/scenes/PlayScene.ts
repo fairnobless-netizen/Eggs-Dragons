@@ -297,18 +297,18 @@ private ensureDragonAnims() {
         }
     });
 
-    gameBridge.on('G_MOVE_DRAGON', (pos: RampPos) => {
-  // Allow movement even in WAITING_START for feedback
+gameBridge.on('G_MOVE_DRAGON', (pos: RampPos) => {
   if (this.state === GameState.PLAYING || this.state === 'WAITING_START') {
-    // Прыжок должен быть ТОЛЬКО при реальном изменении lane (клик/тап по кнопке)
     const prevLane = this.dragonLane;
+
     if (prevLane !== pos) {
       this.dragonLane = pos;
       this.updateDragonPos();
-      this.playDragonHop();
+      this.playDragonHop(); // ✅ прыжок ТОЛЬКО по кнопке
     }
   }
 });
+
 
     
     gameBridge.on('G_FULLSCREEN', (isFull: boolean) => {
@@ -655,7 +655,12 @@ private ensureDragonAnims() {
   this.magnetGlow.fillStyle(color, baseAlpha * pulse);
 
   // центр подсветки — тело дракона
-  this.magnetGlow.fillCircle(0, 0, radius);
+  const glowY = this.dragonSprite
+  ? -0.2 * this.dragonSprite.displayHeight
+  : 0;
+
+this.magnetGlow.fillCircle(0, glowY, radius);
+
 
   // мягкое “затухание” к краям
   this.magnetGlow.fillStyle(color, baseAlpha * 0.5 * pulse);
