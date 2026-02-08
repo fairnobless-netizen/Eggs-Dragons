@@ -146,7 +146,7 @@ private createDragon() {
 
   // По умолчанию — лёгкий “idle” (можно оставить только hop, если хочешь)
   this.dragonSprite.play('dragon_idle');
-
+  this.dragonSprite.setFrame('f_0_0');
   // Позиционируем по текущему lane
   this.updateDragonPos();
 }
@@ -161,21 +161,22 @@ private ensureDragonAnims() {
     }
   }
 
-  // Быстрый hop (одно проигрывание)
-  (this as any).anims.create({
-    key: 'dragon_hop',
-    frames,
-    frameRate: 10,
-    repeat: 0,
-  });
+  // === HOP: все 25 кадров за 0.6 секунды ===
+(this as any).anims.create({
+  key: 'dragon_hop',
+  frames,          // все кадры атласа
+  duration: 600,   // ✅ ВЕСЬ прыжок = 0.6 сек
+  repeat: 0,       // проигрывается ОДИН раз
+});
 
-  // Медленный idle (чтобы “дышал”, можно выключить)
-  (this as any).anims.create({
-    key: 'dragon_idle',
-    frames,
-    frameRate: 10,
-    repeat: 0,
-  });
+// === IDLE: СТАТИЧНЫЙ (один кадр, без движения) ===
+(this as any).anims.create({
+  key: 'dragon_idle',
+  frames: [frames[0]], // ✅ ТОЛЬКО первый кадр
+  frameRate: 1,
+  repeat: -1,
+});
+
 }
 
 
