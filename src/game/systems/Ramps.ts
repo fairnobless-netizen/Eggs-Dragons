@@ -22,72 +22,88 @@ export class RampsSystem {
   }
 
   private configure() {
-    // Source of truth: Phaser Scale base size (logical world).
-    // Fallback to GAME_CONFIG if Scale is not ready yet.
-    const w = (this.scene.scale as any)?.baseSize?.width ?? GAME_CONFIG.WIDTH;
-    const h = (this.scene.scale as any)?.baseSize?.height ?? GAME_CONFIG.HEIGHT;
+  const w = GAME_CONFIG.WIDTH; // 800
+  const h = GAME_CONFIG.HEIGHT; // 600
 
-    // GEOMETRY CONFIGURATION
-    // Ramps start at the very edges of the world (0 and w) to anchor to the DeviceShell.
-    // They end closer to the center to feed the dragon.
+  // -----------------------------
+  // RAMP ANGLE TUNING (Stage 2)
+  // -----------------------------
+  // rampAngleDeg: общий наклон рамп (все 4 одинаково)
+  // verticalOffsetPx: рампы чуть ниже "верхнего кантика" скалы (увеличь = ниже)
+  //
+  // Подстройка:
+  // - если рампы слишком "крутые" => уменьши rampAngleDeg
+  // - если рампы слишком "плоские" => увеличь rampAngleDeg
+  // - если рампы лежат слишком высоко => увеличь verticalOffsetPx
+  // - если рампы слишком низко => уменьши verticalOffsetPx
+  const rampAngleDeg = 18;        // стартовое значение, будем тюнить по скалам
+  const verticalOffsetPx = 12;    // "чуточку ниже" линии скал
 
-    const rampWidthX = 280; // Horizontal length of the ramp
-    const gapToCatch = 40;  // Gap between ramp end and dragon catch point
+  const rampWidthX = 280; // длина по X НЕ меняем
+  const gapToCatch = 40;  // НЕ меняем
 
-    // Left Lane Coordinates
-    const Lx_Start = 0;
-    const Lx_End = rampWidthX;
-    const Lx_Catch = Lx_End + gapToCatch;
+  // Вычисляем подъём по Y из угла (одинаково для верх/низ)
+  const rampRiseY = Math.tan(Phaser.Math.DegToRad(rampAngleDeg)) * rampWidthX;
 
-    // Right Lane Coordinates
-    const Rx_Start = w;
-    const Rx_End = w - rampWidthX;
-    const Rx_Catch = Rx_End - gapToCatch;
+  // Left Lane X (НЕ меняем)
+  const Lx_Start = 0;
+  const Lx_End = rampWidthX;
+  const Lx_Catch = Lx_End + gapToCatch;
 
-    // Y Coordinates (Symmetric for Left/Right)
-    const Top_Y_Start = 130;
-    const Top_Y_End = 260;
+  // Right Lane X (НЕ меняем)
+  const Rx_Start = w;
+  const Rx_End = w - rampWidthX;
+  const Rx_Catch = Rx_End - gapToCatch;
 
-    const Bot_Y_Start = 330;
-    const Bot_Y_End = 460;
+  // -----------------------------
+  // BASE Y POSITIONS (keep bands)
+  // -----------------------------
+  // Мы сохраняем "полосы" по высоте, но меняем наклон:
+  // EndY = StartY + rampRiseY
+  const Top_Y_Start = 130 + verticalOffsetPx;
+  const Bot_Y_Start = 330 + verticalOffsetPx;
 
-    // Catch Y aligned with End Y for smooth transition
-    const Catch_Y_Top = Top_Y_End + 10; // Slight drop for gravity feel
-    const Catch_Y_Bot = Bot_Y_End + 10;
+  const Top_Y_End = Top_Y_Start + rampRiseY;
+  const Bot_Y_End = Bot_Y_Start + rampRiseY;
 
-    this.tracks = [];
-    this.catchPoints = {} as any;
+  // Catch Y чуть ниже конца рампы (как было раньше)
+  const Catch_Y_Top = Top_Y_End + 10;
+  const Catch_Y_Bot = Bot_Y_End + 10;
 
-    // Define Lines (Start -> End)
-    // Lane 0: Left Top
-    this.tracks[RampPos.LEFT_TOP] = new Phaser.Curves.Line(
-      new Phaser.Math.Vector2(Lx_Start, Top_Y_Start),
-      new Phaser.Math.Vector2(Lx_End, Top_Y_End)
-    );
-    // Lane 1: Left Bot
-    this.tracks[RampPos.LEFT_BOT] = new Phaser.Curves.Line(
-      new Phaser.Math.Vector2(Lx_Start, Bot_Y_Start),
-      new Phaser.Math.Vector2(Lx_End, Bot_Y_End)
-    );
-    // Lane 2: Right Top
-    this.tracks[RampPos.RIGHT_TOP] = new Phaser.Curves.Line(
-      new Phaser.Math.Vector2(Rx_Start, Top_Y_Start),
-      new Phaser.Math.Vector2(Rx_End, Top_Y_End)
-    );
-    // Lane 3: Right Bot
-    this.tracks[RampPos.RIGHT_BOT] = new Phaser.Curves.Line(
-      new Phaser.Math.Vector2(Rx_Start, Bot_Y_Start),
-      new Phaser.Math.Vector2(Rx_End, Bot_Y_End)
-    );
+  this.tracks = [];
+  this.catchPoints = {} as any;
 
-    // Define Catch Points (Dragon Position)
-    this.catchPoints = {
-      [RampPos.LEFT_TOP]: new Phaser.Math.Vector2(Lx_Catch, Catch_Y_Top),
-      [RampPos.LEFT_BOT]: new Phaser.Math.Vector2(Lx_Catch, Catch_Y_Bot),
-      [RampPos.RIGHT_TOP]: new Phaser.Math.Vector2(Rx_Catch, Catch_Y_Top),
-      [RampPos.RIGHT_BOT]: new Phaser.Math.Vector2(Rx_Catch, Catch_Y_Bot),
-    };
-  }
+  // Lane 0: Left Top
+  this.tracks[RampPos.LEFT_TOP] = new Phaser.Curves.Line(
+    new Phaser.Math.Vector2(Lx_Start, Top_Y_Start),
+    new Phaser.Math.Vector2(Lx_End, Top_Y_End)
+  );
+
+  // Lane 1: Left Bot
+  this.tracks[RampPos.LEFT_BOT] = new Phaser.Curves.Line(
+    new Phaser.Math.Vector2(Lx_Start, Bot_Y_Start),
+    new Phaser.Math.Vector2(Lx_End, Bot_Y_End)
+  );
+
+  // Lane 2: Right Top
+  this.tracks[RampPos.RIGHT_TOP] = new Phaser.Curves.Line(
+    new Phaser.Math.Vector2(Rx_Start, Top_Y_Start),
+    new Phaser.Math.Vector2(Rx_End, Top_Y_End)
+  );
+
+  // Lane 3: Right Bot
+  this.tracks[RampPos.RIGHT_BOT] = new Phaser.Curves.Line(
+    new Phaser.Math.Vector2(Rx_Start, Bot_Y_Start),
+    new Phaser.Math.Vector2(Rx_End, Bot_Y_End)
+  );
+
+  this.catchPoints = {
+    [RampPos.LEFT_TOP]: new Phaser.Math.Vector2(Lx_Catch, Catch_Y_Top),
+    [RampPos.LEFT_BOT]: new Phaser.Math.Vector2(Lx_Catch, Catch_Y_Bot),
+    [RampPos.RIGHT_TOP]: new Phaser.Math.Vector2(Rx_Catch, Catch_Y_Top),
+    [RampPos.RIGHT_BOT]: new Phaser.Math.Vector2(Rx_Catch, Catch_Y_Bot),
+  };
+}
 
   getPosition(lane: RampPos, t: number): Phaser.Math.Vector2 {
     return this.tracks[lane].getPoint(t);
