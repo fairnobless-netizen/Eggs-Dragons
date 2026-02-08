@@ -40,30 +40,39 @@ export class RampsSystem {
   const Rx_End = w - rampWidthX;
   const Rx_Catch = Rx_End - gapToCatch;
 
-  // --- ANGLE TUNING (only Y changes) ---
-  // ВАЖНО: Ты написал "угол был крутоват" -> значит надо СДЕЛАТЬ ЧУТЬ ПЛОЩЕ.
-  // Поэтому уменьшаем угол относительно прошлого (примерно).
-  // Если захочешь наоборот круче — просто увеличь значение.
-  const rampAngleDeg = 16; // было ~18 у меня -> делаем чуть менее круто
-  const verticalOffset = 8; // "чуточку ниже кантика" (подстройка)
+ // --- ANGLE TUNING (only Y changes) ---
+// Раздельная настройка наклона: верх/низ независимо
+// Пологий = меньше градусов
+const topAngleDeg = 12;      // верхние рампы чуть положе
+const bottomAngleDeg = 10;   // нижние рампы ещё положе
 
-  const rampRiseY = Math.tan(Phaser.Math.DegToRad(rampAngleDeg)) * rampWidthX;
+// "чуточку ниже кантика" (общий оффсет)
+const verticalOffset = 8;
 
-  // Y Coordinates (Symmetric for Left/Right)
-  const Top_Y_Start = 130 + verticalOffset;
-  const Top_Y_End = Top_Y_Start + rampRiseY;
+// Верхние рампы поднять выше (увеличь, если надо ещё выше)
+const topLiftPx = 10;
 
-  const bottomExtraDrop = 32; // <-- опускаем ТОЛЬКО нижние рампы (подстройка)
-  const Bot_Y_Start = 330 + verticalOffset + bottomExtraDrop;
+// Нижние рампы опустить (оставляем твоё текущее значение)
+const bottomExtraDrop = 38;
 
-  const Bot_Y_End = Bot_Y_Start + rampRiseY;
+// Подъём по Y из угла (для заданной длины по X)
+const topRiseY = Math.tan(Phaser.Math.DegToRad(topAngleDeg)) * rampWidthX;
+const bottomRiseY = Math.tan(Phaser.Math.DegToRad(bottomAngleDeg)) * rampWidthX;
 
-  // Catch Y aligned with End Y for smooth transition
-  const Catch_Y_Top = Top_Y_End + 10;
-  const Catch_Y_Bot = Bot_Y_End + 10;
+// Y Coordinates (Symmetric for Left/Right)
+const Top_Y_Start = 130 + verticalOffset - topLiftPx;
+const Top_Y_End = Top_Y_Start + topRiseY;
 
-  this.tracks = [];
-  this.catchPoints = {} as any;
+const Bot_Y_Start = 330 + verticalOffset + bottomExtraDrop;
+const Bot_Y_End = Bot_Y_Start + bottomRiseY;
+
+// Catch Y aligned with End Y for smooth transition
+const Catch_Y_Top = Top_Y_End + 10;
+const Catch_Y_Bot = Bot_Y_End + 10;
+
+this.tracks = [];
+this.catchPoints = {} as any;
+
 
   // Define Lines (Start -> End)
   // Lane 0: Left Top
