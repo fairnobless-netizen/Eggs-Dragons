@@ -41,7 +41,7 @@ useLayoutEffect(() => {
   const mount = document.getElementById('full-mount-parent');
   const shared = document.getElementById('game-shared-mount');
 
-  if (!mount || !shared) return;
+  if (!mount) return;
 
   // Full overlay container must be a stable viewport
   Object.assign(mount.style, {
@@ -53,14 +53,12 @@ useLayoutEffect(() => {
     backgroundColor: '#000',
   });
 
-  const getCanvas = (): HTMLCanvasElement | null => {
-    return (
-      (shared.querySelector('canvas') as HTMLCanvasElement | null) ??
-      (mount.querySelector('canvas') as HTMLCanvasElement | null)
-    );
-  };
+  const getCanvas = () =>
+    ((shared?.querySelector('canvas') as HTMLCanvasElement | null) ??
+      (mount.querySelector('canvas') as HTMLCanvasElement | null)) || null;
 
-  const clearCanvasInline = (canvas: HTMLCanvasElement | null) => {
+  const resetCanvasInline = () => {
+    const canvas = getCanvas();
     if (!canvas) return;
     canvas.style.position = '';
     canvas.style.left = '';
@@ -73,7 +71,8 @@ useLayoutEffect(() => {
     canvas.style.transform = '';
   };
 
-  const clearSharedInline = () => {
+  const resetSharedInline = () => {
+    if (!shared) return;
     shared.style.position = '';
     shared.style.left = '';
     shared.style.top = '';
@@ -84,22 +83,23 @@ useLayoutEffect(() => {
     shared.style.margin = '';
     shared.style.padding = '';
     shared.style.transform = '';
-    shared.style.overflow = '';
   };
 
-  // Canvas (FULL): true "cover" without distortion (fills screen, crops if needed)
+  // Canvas (FULL): true "cover" without distortion.
+  // Center canvas and scale by max(container/canvas) => fills screen, crops if needed.
   const applyCover = () => {
     const canvas = getCanvas();
     if (!canvas) return;
 
-    const rect = mount.getBoundingClientRect();
+    const hostRect = mount.getBoundingClientRect();
+    if (!hostRect.width || !hostRect.height) return;
 
-    // IMPORTANT: use intrinsic Phaser canvas size (world size), not CSS size
+    // IMPORTANT: use internal canvas resolution as base
     const cw = canvas.width;
     const ch = canvas.height;
     if (!cw || !ch) return;
 
-    const scale = Math.max(rect.width / cw, rect.height / ch);
+    const scale = Math.max(hostRect.width / cw, hostRect.height / ch);
 
     Object.assign(canvas.style, {
       position: 'absolute',
@@ -114,45 +114,64 @@ useLayoutEffect(() => {
     });
   };
 
-  if (isFull) {
-    // HARD RESET for Full mode: shared mount fills full viewport
+  if (!isFull) {
+    // Leaving full: clear inline overrides so NormalMode CSS can control layout
+    resetCanvasInline();
+    resetSharedInline();
+    return;
+  }
+
+  // ENTER FULL:
+  // 1) hard-reset shared mount geometry
+  if (shared) {
     Object.assign(shared.style, {
       position: 'absolute',
       left: '0px',
       top: '0px',
-      right: '0px',
-      bottom: '0px',
+      right: 'auto',
+      bottom: 'auto',
       width: '100%',
       height: '100%',
       margin: '0',
       padding: '0',
       transform: 'none',
-      overflow: 'hidden',
     });
-
-    const onResize = () => requestAnimationFrame(applyCover);
-
-    const raf = requestAnimationFrame(applyCover);
-    window.addEventListener('resize', onResize);
-    window.addEventListener('orientationchange', onResize);
-
-    const ro = new ResizeObserver(() => onResize());
-    ro.observe(mount);
-
-    return () => {
-      cancelAnimationFrame(raf);
-      window.removeEventListener('resize', onResize);
-      window.removeEventListener('orientationchange', onResize);
-      ro.disconnect();
-
-      clearCanvasInline(getCanvas());
-      clearSharedInline();
-    };
   }
 
-  // If not full (редкий кейс, но пусть будет)
-  clearCanvasInline(getCanvas());
-  clearSharedInline();
+  // 2) clear any old canvas inline first (normal-mode leftovers)
+  resetCanvasInline();
+
+  // 3) Apply cover AFTER DOM move settles:
+  //    - 2x RAF
+  //    - small timeout
+  const raf1 = requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      applyCover();
+    });
+  });
+  const t1 = window.setTimeout(() => applyCover(), 60);
+  const t2 = window.setTimeout(() => applyCover(), 180);
+
+  // 4) Observe real size changes (this catches Normal->Full switch without rotate)
+  const ro = new ResizeObserver(() => {
+    applyCover();
+  });
+  ro.observe(mount);
+  if (shared) ro.observe(shared);
+
+  window.addEventListener('resize', applyCover);
+
+  return () => {
+    cancelAnimationFrame(raf1);
+    window.clearTimeout(t1);
+    window.clearTimeout(t2);
+    window.removeEventListener('resize', applyCover);
+    ro.disconnect();
+
+    // Important: cleanup inline styles so next mode starts clean
+    resetCanvasInline();
+    resetSharedInline();
+  };
 }, [isFull]);
 
   useEffect(() => {
