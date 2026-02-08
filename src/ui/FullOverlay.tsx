@@ -36,80 +36,32 @@ export const FullOverlay: React.FC<FullOverlayProps> = ({ isFull, toggleFull, on
 
   const t = I18N[profile.language] || I18N.en;
 
-   // Enforce Fullscreen geometry: do NOT reuse NormalMode positioning
-  useLayoutEffect(() => {
-    const mount = document.getElementById('full-mount-parent');
-    const shared = document.getElementById('game-shared-mount');
+ // Enforce Fullscreen geometry: do NOT reuse NormalMode positioning
+useLayoutEffect(() => {
+  const mount = document.getElementById('full-mount-parent');
+  const shared = document.getElementById('game-shared-mount');
 
-    if (!mount) return;
+  if (!mount || !shared) return;
 
-    // Full overlay container must be a stable viewport
-    Object.assign(mount.style, {
-      position: 'relative',
-      display: 'block',
-      width: '100%',
-      height: '100%',
-      overflow: 'hidden',
-      backgroundColor: '#000',
-    });
+  // Full overlay container must be a stable viewport
+  Object.assign(mount.style, {
+    position: 'relative',
+    display: 'block',
+    width: '100%',
+    height: '100%',
+    overflow: 'hidden',
+    backgroundColor: '#000',
+  });
 
-    if (isFull) {
-      // ✅ HARD RESET for Full mode: pin to (0,0) and fill
-      if (shared) {
-        Object.assign(shared.style, {
-          position: 'absolute',
-          left: '0px',
-          top: '0px',
-          width: '100%',
-          height: '100%',
-          margin: '0',
-          transform: 'none',
-        });
-      }
+  const getCanvas = (): HTMLCanvasElement | null => {
+    return (
+      (shared.querySelector('canvas') as HTMLCanvasElement | null) ??
+      (mount.querySelector('canvas') as HTMLCanvasElement | null)
+    );
+  };
 
-            // Canvas (FULL): true "cover" without distortion.
-      // We center canvas and scale by max(container/canvas) => fills screen, crops top/bottom a bit if needed.
-      const applyCover = () => {
-        const host = mount; // full-mount-parent
-        const canvas =
-          (shared?.querySelector('canvas') as HTMLCanvasElement | null) ??
-          (host.querySelector('canvas') as HTMLCanvasElement | null);
-
-        if (!canvas) return;
-
-        const rect = host.getBoundingClientRect();
-        const cw = canvas.width || canvas.getBoundingClientRect().width;
-        const ch = canvas.height || canvas.getBoundingClientRect().height;
-        if (!cw || !ch) return;
-
-        const scale = Math.max(rect.width / cw, rect.height / ch);
-
-        Object.assign(canvas.style, {
-          position: 'absolute',
-          left: '50%',
-          top: '50%',
-          width: `${cw}px`,
-          height: `${ch}px`,
-          margin: '0',
-          display: 'block',
-          transformOrigin: '50% 50%',
-          transform: `translate(-50%, -50%) scale(${scale})`,
-        });
-      };
-
-      // initial + on resize
-      const raf = requestAnimationFrame(applyCover);
-      window.addEventListener('resize', applyCover);
-
-      return () => {
-  cancelAnimationFrame(raf);
-  window.removeEventListener('resize', applyCover);
-
-  const canvas =
-    (shared?.querySelector('canvas') as HTMLCanvasElement | null) ??
-    (mount.querySelector('canvas') as HTMLCanvasElement | null);
-
-  if (canvas) {
+  const clearCanvasInline = (canvas: HTMLCanvasElement | null) => {
+    if (!canvas) return;
     canvas.style.position = '';
     canvas.style.left = '';
     canvas.style.top = '';
@@ -119,45 +71,89 @@ export const FullOverlay: React.FC<FullOverlayProps> = ({ isFull, toggleFull, on
     canvas.style.display = '';
     canvas.style.transformOrigin = '';
     canvas.style.transform = '';
-  }
-};
+  };
 
-} else {
-  // Leaving full: clear inline overrides so NormalMode CSS can control layout
-
-  // reset shared mount styles
-  if (shared) {
+  const clearSharedInline = () => {
     shared.style.position = '';
     shared.style.left = '';
     shared.style.top = '';
+    shared.style.right = '';
+    shared.style.bottom = '';
     shared.style.width = '';
     shared.style.height = '';
     shared.style.margin = '';
+    shared.style.padding = '';
     shared.style.transform = '';
+    shared.style.overflow = '';
+  };
+
+  // Canvas (FULL): true "cover" without distortion (fills screen, crops if needed)
+  const applyCover = () => {
+    const canvas = getCanvas();
+    if (!canvas) return;
+
+    const rect = mount.getBoundingClientRect();
+
+    // IMPORTANT: use intrinsic Phaser canvas size (world size), not CSS size
+    const cw = canvas.width;
+    const ch = canvas.height;
+    if (!cw || !ch) return;
+
+    const scale = Math.max(rect.width / cw, rect.height / ch);
+
+    Object.assign(canvas.style, {
+      position: 'absolute',
+      left: '50%',
+      top: '50%',
+      width: `${cw}px`,
+      height: `${ch}px`,
+      margin: '0',
+      display: 'block',
+      transformOrigin: '50% 50%',
+      transform: `translate(-50%, -50%) scale(${scale})`,
+    });
+  };
+
+  if (isFull) {
+    // HARD RESET for Full mode: shared mount fills full viewport
+    Object.assign(shared.style, {
+      position: 'absolute',
+      left: '0px',
+      top: '0px',
+      right: '0px',
+      bottom: '0px',
+      width: '100%',
+      height: '100%',
+      margin: '0',
+      padding: '0',
+      transform: 'none',
+      overflow: 'hidden',
+    });
+
+    const onResize = () => requestAnimationFrame(applyCover);
+
+    const raf = requestAnimationFrame(applyCover);
+    window.addEventListener('resize', onResize);
+    window.addEventListener('orientationchange', onResize);
+
+    const ro = new ResizeObserver(() => onResize());
+    ro.observe(mount);
+
+    return () => {
+      cancelAnimationFrame(raf);
+      window.removeEventListener('resize', onResize);
+      window.removeEventListener('orientationchange', onResize);
+      ro.disconnect();
+
+      clearCanvasInline(getCanvas());
+      clearSharedInline();
+    };
   }
 
-  // reset canvas styles (was "cover" in full mode)
-  const canvas =
-    (shared?.querySelector('canvas') as HTMLCanvasElement | null) ??
-    (mount.querySelector('canvas') as HTMLCanvasElement | null);
-
-  if (canvas) {
-    canvas.style.position = '';
-    canvas.style.left = '';
-    canvas.style.top = '';
-    canvas.style.width = '';
-    canvas.style.height = '';
-    canvas.style.margin = '';
-    canvas.style.display = '';
-    canvas.style.transformOrigin = '';
-    canvas.style.transform = '';
-  }
-
-  // optional: reset mount to avoid affecting Normal
-  mount.style.overflow = '';
-  mount.style.backgroundColor = '';
-}
-  }, [isFull]);
+  // If not full (редкий кейс, но пусть будет)
+  clearCanvasInline(getCanvas());
+  clearSharedInline();
+}, [isFull]);
 
   useEffect(() => {
     // Basic mobile check
