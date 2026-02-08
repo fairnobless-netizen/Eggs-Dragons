@@ -10,7 +10,7 @@ export class BootScene extends Phaser.Scene {
   preload() {
     // T1: Load Assets from public/game folder
     (this as any).load.path = '/game/';
-
+    
     // Audio
     (this as any).load.audio('bg_music', ['audio/bg_ambient_loop.mp3', 'audio/bg_ambient_loop.ogg']);
 
@@ -19,6 +19,7 @@ export class BootScene extends Phaser.Scene {
 
     // Dragon as atlas (spritesheet + json)
     (this as any).load.atlas(
+    
       ASSETS.IMAGES.DRAGON,
       'dragon/dragon_move.png',
       'dragon/dragon_move.json'

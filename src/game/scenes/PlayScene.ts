@@ -297,13 +297,19 @@ private ensureDragonAnims() {
         }
     });
 
-    gameBridge.on('G_MOVE_DRAGON', (pos: RampPos) => { 
-      // Allow movement even in WAITING_START for feedback
-      if (this.state === GameState.PLAYING || this.state === 'WAITING_START') { 
-        this.dragonLane = pos; 
-        this.updateDragonPos(); 
-      } 
-    });
+    gameBridge.on('G_MOVE_DRAGON', (pos: RampPos) => {
+  // Allow movement even in WAITING_START for feedback
+  if (this.state === GameState.PLAYING || this.state === 'WAITING_START') {
+    // Прыжок должен быть ТОЛЬКО при реальном изменении lane (клик/тап по кнопке)
+    const prevLane = this.dragonLane;
+    if (prevLane !== pos) {
+      this.dragonLane = pos;
+      this.updateDragonPos();
+      this.playDragonHop();
+    }
+  }
+});
+
     
     gameBridge.on('G_FULLSCREEN', (isFull: boolean) => {
         this.ramps.updateLayout(isFull);
@@ -534,9 +540,12 @@ private ensureDragonAnims() {
     if (this.boosts.isMagnetActive) {
         const remaining = this.boosts.getRemainingTime('magnet');
         const pulse = 0.5 + 0.5 * Math.sin(time / 100);
+        const glowY = this.dragonSprite ? -0.2 * this.dragonSprite.displayHeight : 0;
+
         this.magnetGlow.clear();
         this.magnetGlow.fillStyle(0xfacc15, 0.3 * pulse);
-        this.magnetGlow.fillCircle(0, 0, 60 + 10 * pulse);
+        this.magnetGlow.fillCircle(0, glowY, 60 + 10 * pulse);
+
     } else {
         this.magnetGlow.clear();
     }
@@ -696,7 +705,7 @@ updateDragonPos() {
   const isLeft = lane === RampPos.LEFT_TOP || lane === RampPos.LEFT_BOT;
 
   this.dragonContainer.setScale(isLeft ? -baseScale : baseScale, baseScale);
-  this.playDragonHop();
+  
 }
 
 
