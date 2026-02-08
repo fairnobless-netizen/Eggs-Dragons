@@ -184,26 +184,43 @@ useEffect(() => {
     target.appendChild(sharedMountRef.current);
   }
 
-  // Phaser rewrites canvas CSS during refresh(); we must re-apply cover AFTER that.
+  // P0: Telegram WebView often finalizes viewport only after a real/synthetic resize tick.
+  // We do 2–3 passes: (layout flush) -> phaser refresh -> synthetic resize -> PHASER_REFRESHED
+  const refreshOnce = () => {
+    // Force layout flush so getBoundingClientRect() returns final geometry
+    target.getBoundingClientRect();
+
+    if (gameRef.current) {
+      gameRef.current.scale.refresh();
+    }
+
+    // Important: mimic what fixes it on phone rotation
+    window.dispatchEvent(new Event('resize'));
+
+    // Let FullOverlay re-apply cover AFTER Phaser touches canvas CSS
+    window.dispatchEvent(new CustomEvent('PHASER_REFRESHED', { detail: { isFull } }));
+  };
+
   let raf1 = 0;
   let raf2 = 0;
-  let raf3 = 0;
+  let t1: number | undefined;
+  let t2: number | undefined;
 
   raf1 = requestAnimationFrame(() => {
     raf2 = requestAnimationFrame(() => {
-      if (gameRef.current) {
-        gameRef.current.scale.refresh();
-      }
-      raf3 = requestAnimationFrame(() => {
-        window.dispatchEvent(new CustomEvent('PHASER_REFRESHED', { detail: { isFull } }));
-      });
+      refreshOnce();
     });
   });
+
+  // Extra stabilization passes (Telegram often settles viewport in the next ticks)
+  t1 = window.setTimeout(refreshOnce, 80);
+  t2 = window.setTimeout(refreshOnce, 220);
 
   return () => {
     cancelAnimationFrame(raf1);
     cancelAnimationFrame(raf2);
-    cancelAnimationFrame(raf3);
+    if (t1) window.clearTimeout(t1);
+    if (t2) window.clearTimeout(t2);
   };
 }, [isFull, isOnboarded, isLoading]);
 
