@@ -571,55 +571,75 @@ export class PlayScene extends Phaser.Scene {
   }
 
   private updateDragonHighlights(time: number) {
-    const crystalBody = this.profile.skins.crystalBodyOwned;
-    const ironBody = this.profile.skins.ironBodyOwned;
-    
-    this.tailPart.setAlpha(1).setFillStyle(0x1d4ed8);
-    this.wingsPart.setAlpha(0.6).setFillStyle(0x60a5fa);
-    this.legsPart.setAlpha(1).setFillStyle(0x1e3a8a);
-    this.bodyPart.setAlpha(1).setFillStyle(0x3b82f6);
+  if (!this.dragonContainer || !this.magnetGlow) return;
 
-    if (this.profile.skins.tailTier >= 1) this.tailPart.setFillStyle(0x334155); 
-    
-    // Tail Ready Indicator (Subtle glow if ready?)
-    if (this.tailCooldownTimer <= 0 && this.profile.skins.tailTier >= 1) {
-        // Pulse effect for ready state
-        const pulse = 0.5 + 0.5 * Math.sin(time / 200);
-        this.tailPart.setStrokeStyle(2, 0xff5252, pulse);
-    }
+  // базовая прозрачность (очень мягко)
+  let baseAlpha = 0.12;
+  let radius = 90;
+  let color = 0x60a5fa; // default calm blue
 
-    if (time < this.tailHighlightUntil) {
-       this.tailPart.setFillStyle(0xf97316);
-       this.tailPart.setAlpha(0.8 + 0.2 * Math.sin(time / 50));
-    }
+  // === СОСТОЯНИЯ / БУСТЫ ===
 
-    if (this.profile.skins.wingsTier >= 1) this.wingsPart.setAlpha(0.7);
-    if (time < this.wingsHighlightUntil || this.boosts.isMagnetActive) {
-       this.wingsPart.setFillStyle(0xfacc15);
-       this.wingsPart.setAlpha(0.6 + 0.4 * Math.sin(time / 100));
-    }
-
-    // Legs Charged Indicator
-    if (this.legsCharged) {
-       this.legsPart.setStrokeStyle(2, 0x22c55e, 1);
-    }
-
-    if (time < this.legsHighlightUntil) {
-       this.legsPart.setFillStyle(0x22c55e);
-       this.legsPart.setAlpha(0.8 + 0.2 * Math.cos(time / 50));
-    }
-
-    if (crystalBody || ironBody) {
-       this.bodyPart.setStrokeStyle(4, crystalBody ? 0x00ffff : 0x94a3b8);
-       this.bodyPart.setAlpha(0.9 + 0.1 * Math.sin(time / 500));
-    }
+  // Магнит
+  if (this.boosts?.isMagnetActive) {
+    color = 0x38bdf8; // cyan
+    baseAlpha = 0.22;
+    radius = 110;
   }
 
-  private updateDragonPos() {
-    const catchPos = this.ramps.getDragonCatchPosition(this.dragonLane);
-    this.dragonContainer.setPosition(catchPos.x, catchPos.y);
-    this.dragonContainer.setScale(this.dragonLane === RampPos.RIGHT_TOP || this.dragonLane === RampPos.RIGHT_BOT ? -1 : 1, 1);
+  // Хвост (атака / удар)
+  if (time < this.tailHighlightUntil) {
+    color = 0xf97316; // orange
+    baseAlpha = 0.25;
+    radius = 105;
   }
+
+  // Крылья (ускорение / контроль)
+  if (time < this.wingsHighlightUntil) {
+    color = 0xfacc15; // yellow
+    baseAlpha = 0.22;
+    radius = 100;
+  }
+
+  // Ноги (заряд / прыжок)
+  if (time < this.legsHighlightUntil) {
+    color = 0x22c55e; // green
+    baseAlpha = 0.20;
+    radius = 95;
+  }
+
+  // === ПУЛЬС (очень мягкий) ===
+  const pulse = 0.85 + 0.15 * Math.sin(time / 220);
+
+  // === РИСУЕМ ГРАДИЕНТ ===
+  this.magnetGlow.clear();
+
+  this.magnetGlow.fillStyle(color, baseAlpha * pulse);
+
+  // центр подсветки — тело дракона
+  this.magnetGlow.fillCircle(0, 0, radius);
+
+  // мягкое “затухание” к краям
+  this.magnetGlow.fillStyle(color, baseAlpha * 0.5 * pulse);
+  this.magnetGlow.fillCircle(0, 0, radius * 1.25);
+
+  this.magnetGlow.fillStyle(color, baseAlpha * 0.25 * pulse);
+  this.magnetGlow.fillCircle(0, 0, radius * 1.5);
+}
+
+
+  updateDragonPos() {
+  const catchPos = this.ramps.getDragonCatchPosition(this.dragonLane);
+
+  this.dragonContainer.setPosition(catchPos.x, catchPos.y);
+
+  const flip =
+    this.dragonLane === RampPos.RIGHT_TOP ||
+    this.dragonLane === RampPos.RIGHT_BOT;
+
+  this.dragonContainer.setScale(flip ? -1 : 1, 1);
+}
+
 
   private handleCatch(egg: any) {
     if (this.state !== GameState.PLAYING) return;
