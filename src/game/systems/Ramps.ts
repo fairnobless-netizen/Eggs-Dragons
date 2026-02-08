@@ -53,7 +53,9 @@ export class RampsSystem {
   const Top_Y_Start = 130 + verticalOffset;
   const Top_Y_End = Top_Y_Start + rampRiseY;
 
-  const Bot_Y_Start = 330 + verticalOffset;
+  const bottomExtraDrop = 18; // <-- опускаем ТОЛЬКО нижние рампы (подстройка)
+const Bot_Y_Start = 330 + verticalOffset + bottomExtraDrop;
+
   const Bot_Y_End = Bot_Y_Start + rampRiseY;
 
   // Catch Y aligned with End Y for smooth transition
