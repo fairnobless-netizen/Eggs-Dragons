@@ -36,143 +36,112 @@ export const FullOverlay: React.FC<FullOverlayProps> = ({ isFull, toggleFull, on
 
   const t = I18N[profile.language] || I18N.en;
 
- // Enforce Fullscreen geometry: do NOT reuse NormalMode positioning
-useLayoutEffect(() => {
-  const mount = document.getElementById('full-mount-parent');
-  const shared = document.getElementById('game-shared-mount');
+   // Enforce Fullscreen geometry: do NOT reuse NormalMode positioning
+  useLayoutEffect(() => {
+    if (!isFull) return;
 
-  if (!mount) return;
+    const mount = document.getElementById('full-mount-parent');
+    const shared = document.getElementById('game-shared-mount');
 
-  // Full overlay container must be a stable viewport
-  Object.assign(mount.style, {
-    position: 'relative',
-    display: 'block',
-    width: '100%',
-    height: '100%',
-    overflow: 'hidden',
-    backgroundColor: '#000',
-  });
+    if (!mount || !shared) return;
 
-  const getCanvas = () =>
-    ((shared?.querySelector('canvas') as HTMLCanvasElement | null) ??
-      (mount.querySelector('canvas') as HTMLCanvasElement | null)) || null;
-
-  const resetCanvasInline = () => {
-    const canvas = getCanvas();
-    if (!canvas) return;
-    canvas.style.position = '';
-    canvas.style.left = '';
-    canvas.style.top = '';
-    canvas.style.width = '';
-    canvas.style.height = '';
-    canvas.style.margin = '';
-    canvas.style.display = '';
-    canvas.style.transformOrigin = '';
-    canvas.style.transform = '';
-  };
-
-  const resetSharedInline = () => {
-    if (!shared) return;
-    shared.style.position = '';
-    shared.style.left = '';
-    shared.style.top = '';
-    shared.style.right = '';
-    shared.style.bottom = '';
-    shared.style.width = '';
-    shared.style.height = '';
-    shared.style.margin = '';
-    shared.style.padding = '';
-    shared.style.transform = '';
-  };
-
-  // Canvas (FULL): true "cover" without distortion.
-  // Center canvas and scale by max(container/canvas) => fills screen, crops if needed.
-  const applyCover = () => {
-    const canvas = getCanvas();
-    if (!canvas) return;
-
-    const hostRect = mount.getBoundingClientRect();
-    if (!hostRect.width || !hostRect.height) return;
-
-    // IMPORTANT: use internal canvas resolution as base
-    const cw = canvas.width;
-    const ch = canvas.height;
-    if (!cw || !ch) return;
-
-    const scale = Math.max(hostRect.width / cw, hostRect.height / ch);
-
-    Object.assign(canvas.style, {
-      position: 'absolute',
-      left: '50%',
-      top: '50%',
-      width: `${cw}px`,
-      height: `${ch}px`,
+    // Full overlay = fixed viewport (true fullscreen host)
+    Object.assign(mount.style, {
+      position: 'fixed',
+      inset: '0',
+      width: '100vw',
+      height: '100vh',
       margin: '0',
-      display: 'block',
-      transformOrigin: '50% 50%',
-      transform: `translate(-50%, -50%) scale(${scale})`,
+      padding: '0',
+      overflow: 'hidden',
+      backgroundColor: '#000',
     });
-  };
 
-  if (!isFull) {
-    // Leaving full: clear inline overrides so NormalMode CSS can control layout
-    resetCanvasInline();
-    resetSharedInline();
-    return;
-  }
-
-  // ENTER FULL:
-  // 1) hard-reset shared mount geometry
-  if (shared) {
+    // HARD RESET shared mount (remove any NormalMode influence)
     Object.assign(shared.style, {
       position: 'absolute',
       left: '0px',
       top: '0px',
-      right: 'auto',
-      bottom: 'auto',
       width: '100%',
       height: '100%',
       margin: '0',
       padding: '0',
       transform: 'none',
     });
-  }
 
-  // 2) clear any old canvas inline first (normal-mode leftovers)
-  resetCanvasInline();
+    const applyCover = () => {
+      const canvas = shared.querySelector('canvas') as HTMLCanvasElement | null;
+      if (!canvas) return;
 
-  // 3) Apply cover AFTER DOM move settles:
-  //    - 2x RAF
-  //    - small timeout
-  const raf1 = requestAnimationFrame(() => {
-    requestAnimationFrame(() => {
-      applyCover();
-    });
-  });
-  const t1 = window.setTimeout(() => applyCover(), 60);
-  const t2 = window.setTimeout(() => applyCover(), 180);
+      const hostRect = mount.getBoundingClientRect();
+      const cw = canvas.width || canvas.getBoundingClientRect().width;
+      const ch = canvas.height || canvas.getBoundingClientRect().height;
 
-  // 4) Observe real size changes (this catches Normal->Full switch without rotate)
-  const ro = new ResizeObserver(() => {
-    applyCover();
-  });
-  ro.observe(mount);
-  if (shared) ro.observe(shared);
+      if (!hostRect.width || !hostRect.height || !cw || !ch) return;
 
-  window.addEventListener('resize', applyCover);
+      // Cover without distortion (crop top/bottom if needed)
+      const scale = Math.max(hostRect.width / cw, hostRect.height / ch);
 
-  return () => {
-    cancelAnimationFrame(raf1);
-    window.clearTimeout(t1);
-    window.clearTimeout(t2);
-    window.removeEventListener('resize', applyCover);
-    ro.disconnect();
+      Object.assign(canvas.style, {
+        position: 'absolute',
+        left: '50%',
+        top: '50%',
+        width: `${cw}px`,
+        height: `${ch}px`,
+        margin: '0',
+        display: 'block',
+        transformOrigin: '50% 50%',
+        transform: `translate(-50%, -50%) scale(${scale})`,
+      });
+    };
 
-    // Important: cleanup inline styles so next mode starts clean
-    resetCanvasInline();
-    resetSharedInline();
-  };
-}, [isFull]);
+    const onResize = () => applyCover();
+
+    // Run multiple times because parent re-parenting + Phaser FIT can settle after a tick
+    const raf1 = requestAnimationFrame(applyCover);
+    const raf2 = requestAnimationFrame(applyCover);
+    const t0 = window.setTimeout(applyCover, 50);
+    const t1 = window.setTimeout(applyCover, 250);
+
+    window.addEventListener('resize', onResize);
+    window.addEventListener('orientationchange', onResize);
+    window.visualViewport?.addEventListener('resize', onResize);
+
+    return () => {
+      cancelAnimationFrame(raf1);
+      cancelAnimationFrame(raf2);
+      clearTimeout(t0);
+      clearTimeout(t1);
+
+      window.removeEventListener('resize', onResize);
+      window.removeEventListener('orientationchange', onResize);
+      window.visualViewport?.removeEventListener('resize', onResize);
+
+      // Cleanup canvas inline styles so NormalMode can control it again
+      const canvas = shared.querySelector('canvas') as HTMLCanvasElement | null;
+      if (canvas) {
+        canvas.style.position = '';
+        canvas.style.left = '';
+        canvas.style.top = '';
+        canvas.style.width = '';
+        canvas.style.height = '';
+        canvas.style.margin = '';
+        canvas.style.display = '';
+        canvas.style.transformOrigin = '';
+        canvas.style.transform = '';
+      }
+
+      // Cleanup shared mount inline overrides
+      (shared as HTMLElement).style.position = '';
+      (shared as HTMLElement).style.left = '';
+      (shared as HTMLElement).style.top = '';
+      (shared as HTMLElement).style.width = '';
+      (shared as HTMLElement).style.height = '';
+      (shared as HTMLElement).style.margin = '';
+      (shared as HTMLElement).style.padding = '';
+      (shared as HTMLElement).style.transform = '';
+    };
+  }, [isFull]);
 
   useEffect(() => {
     // Basic mobile check
