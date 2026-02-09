@@ -30,7 +30,7 @@ this.setLane(RampPos.LEFT_TOP);
     const pos = this.ramps.getDragonCatchPosition(lane);
 
 // 🔧 VISUAL ONLY: поднять дракона выше относительно рампы (логика рамп не меняется)
-const VISUAL_Y_OFFSET = -18;
+const VISUAL_Y_OFFSET = -40;
 
 this.setPosition(pos.x, pos.y + VISUAL_Y_OFFSET);
 
