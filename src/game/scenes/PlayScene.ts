@@ -13,7 +13,7 @@ import { BoostsSystem } from '../systems/Boosts';
 const VISIBLE_RAMPS = false;
 // GDX: Visual-only поднятие дракона (НЕ меняет рампы/спавн/механику)
 // Отрицательное значение = визуально выше. Регулируй здесь.
-const DRAGON_VISUAL_OFFSET_Y = -16;
+const DRAGON_VISUAL_OFFSET_Y = -20;
 
 export class PlayScene extends Phaser.Scene {
   private profile!: PlayerProfile;
