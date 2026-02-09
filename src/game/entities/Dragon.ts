@@ -11,29 +11,20 @@ export class Dragon extends Phaser.GameObjects.Sprite {
     super(scene, 0, 0, ASSETS.IMAGES.DRAGON, 'f_0_0');
     this.ramps = ramps;
 
-   scene.add.existing(this);
+    scene.add.existing(this);
 
-// ~10% меньше чем было (было 1.2)
-this.setScale(1.08);
+    // ~10% меньше чем было (было 1.2)
+    this.setScale(1.08);
 
-// 🔧 VISUAL OFFSET: dragon sits higher on the rock
-this.setOrigin(0.5, 0.75);
-
-// Initial pose
-this.setLane(RampPos.LEFT_TOP);
-
+    // Initial pose
+    this.setLane(RampPos.LEFT_TOP);
   }
 
   setLane(lane: number) {
     this.currentLane = lane;
 
     const pos = this.ramps.getDragonCatchPosition(lane);
-
-// 🔧 VISUAL ONLY: поднять дракона выше относительно рампы (логика рамп не меняется)
-const VISUAL_Y_OFFSET = -40;
-
-this.setPosition(pos.x, pos.y + VISUAL_Y_OFFSET);
-
+    this.setPosition(pos.x, pos.y);
 
     /**
      * ВАЖНО:
