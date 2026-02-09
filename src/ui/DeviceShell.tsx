@@ -190,6 +190,8 @@ export const DeviceShell: React.FC<{
           <button className="ui-square-btn" onClick={handleRestart} title={t.restart}>🔄</button>
         </div>
       )}
+      
+      <img className="stone-frame" src="/ui/layer/top_ui_stones.png" alt="" draggable={false} /> 
 
 
       <div className="main-area">

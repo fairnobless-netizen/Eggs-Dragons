@@ -403,7 +403,7 @@ canvas {
 
     transform: translate(-50%, -50%) translateY(22px);
 
-    background-image: url("/game/ui/layer/top_ui_stones.png");
+    background-image: url("/ui/layer/top_ui_stones.png");
     background-repeat: no-repeat;
     background-position: center;
     background-size: 100% 100%;
