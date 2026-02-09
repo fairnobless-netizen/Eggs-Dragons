@@ -4,13 +4,14 @@ import { ASSETS } from '../../app/config';
 import { RampsSystem } from '../systems/Ramps';
 
 export enum EggType {
-  WHITE = 'white',
-  GREEN = 'green',
-  GOLD  = 'gold',
-  BLUE  = 'blue',
-  GRENADE = 'grenade',
-  SCALE = 'scale',
+  WHITE = 'WHITE',
+  GREEN = 'MITHRIL',   // соответствует EGG_TYPES.MITHRIL
+  GOLD  = 'GOLDEN',    // соответствует EGG_TYPES.GOLDEN
+  BLUE  = 'BLUE',      // соответствует EGG_TYPES.BLUE
+  GRENADE = 'BOMB',    // соответствует EGG_TYPES.BOMB
+  SCALE = 'SCALE',     // соответствует EGG_TYPES.SCALE
 }
+
 
 export class Egg extends Phaser.GameObjects.Sprite {
   public lane: number;
@@ -54,8 +55,9 @@ export class Egg extends Phaser.GameObjects.Sprite {
         this.setTexture(ASSETS.IMAGES.EGG_SCALE);
         break;
       case EggType.BLUE:
-      this.setTexture(ASSETS.IMAGES.EGG_BLUE);
-      break;
+        this.setTexture(ASSETS.IMAGES.EGG_BLUE);
+        break;
+
 
         // если ключа нет — упадём на WHITE
         this.setTexture(((ASSETS.IMAGES as any).EGG_BLUE) ?? ASSETS.IMAGES.EGG_WHITE);
