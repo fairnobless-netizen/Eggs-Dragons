@@ -430,12 +430,26 @@ canvas {
     overflow: visible; /* рамка может выходить чуть за пределы */
   }
 
-  .game-screen-frame::before {
+    /* === Stone frame: full-width across the device === */
+  .device-shell {
+    position: relative; /* нужно для ::before */
+  }
+
+  .device-shell::before {
     content: "";
     position: absolute;
+    left: 0;
+    right: 0;
 
-    /* небольшая "кромка" наружу, чтобы камни не обрезались */
-    inset: -22px;
+    /* выравниваем по вертикали так же, как центр main-area */
+    top: 50%;
+    transform: translateY(-50%) translateY(22px);
+
+    /* рамка на всю ширину телефона */
+    width: 100vw;
+
+    /* 2:1 по пропорции */
+    height: calc(100vw / 2);
 
     background-image: url("/ui/layer/top_ui_stones.png");
     background-repeat: no-repeat;
@@ -444,9 +458,10 @@ canvas {
 
     pointer-events: none;
 
-    /* рамка над миром */
+    /* над миром, под UI */
     z-index: 15;
   }
+
 
   /* мир внутри рамки ниже */
   .game-viewport {
