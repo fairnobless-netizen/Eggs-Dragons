@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { GAME_CONFIG, RampPos } from '../../app/config';
 
+
 export class RampsSystem {
   public tracks: Phaser.Curves.Line[] = [];
   private catchPoints: Record<RampPos, Phaser.Math.Vector2>;
@@ -22,6 +23,7 @@ export class RampsSystem {
   }
 
   private configure() {
+    
   // Source of truth: Phaser Scale base size (logical world).
   // Fallback to GAME_CONFIG if Scale is not ready yet.
   const w = (this.scene.scale as any)?.baseSize?.width ?? GAME_CONFIG.WIDTH;
@@ -103,6 +105,7 @@ this.catchPoints = {} as any;
     [RampPos.RIGHT_TOP]: new Phaser.Math.Vector2(Rx_Catch, Catch_Y_Top),
     [RampPos.RIGHT_BOT]: new Phaser.Math.Vector2(Rx_Catch, Catch_Y_Bot),
   };
+  
 }
 
 

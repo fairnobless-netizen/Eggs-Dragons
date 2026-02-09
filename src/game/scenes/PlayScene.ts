@@ -9,6 +9,8 @@ import { ApiClient } from '../../net/apiClient';
 import { RampsSystem } from '../systems/Ramps';
 import { EggMovementSystem } from '../systems/EggMovement';
 import { BoostsSystem } from '../systems/Boosts';
+// GDX: toggle ramp visual visibility (geometry always active)
+const VISIBLE_RAMPS = false;
 
 export class PlayScene extends Phaser.Scene {
   private profile!: PlayerProfile;
@@ -247,17 +249,25 @@ private applyLevelConfig() {
 }
 
   private createRampVisuals(color: number) {
-    this.laneVisuals?.clear(true, true);
-    this.ramps.tracks.forEach((track) => {
-      const p1 = track.p0;
-      const p2 = track.p1;
-      const dist = Phaser.Math.Distance.Between(p1.x, p1.y, p2.x, p2.y);
-      const angle = Phaser.Math.Angle.Between(p1.x, p1.y, p2.x, p2.y);
-      const laneSprite = (this as any).add.tileSprite(p1.x, p1.y, dist, 24, ASSETS.IMAGES.LANE);
-      laneSprite.setOrigin(0, 0.5).setRotation(angle).setAlpha(0.8).setTint(color);
-      this.laneVisuals?.add(laneSprite);
-    });
-  }
+  // Always clear previous visuals
+  this.laneVisuals?.clear(true, true);
+
+  // GDX: ramps are visually hidden, geometry still used for item movement
+  if (!VISIBLE_RAMPS) return;
+
+  this.ramps.tracks.forEach((track) => {
+    const p1 = track.p0;
+    const p2 = track.p1;
+    const dist = Phaser.Math.Distance.Between(p1.x, p1.y, p2.x, p2.y);
+    const angle = Phaser.Math.Angle.Between(p1.x, p1.y, p2.x, p2.y);
+
+    const laneSprite = (this as any).add.tileSprite(p1.x, p1.y, dist, 24, ASSETS.IMAGES.LANE);
+    laneSprite.setOrigin(0, 0.5).setRotation(angle).setAlpha(0.8).setTint(color);
+
+    this.laneVisuals?.add(laneSprite);
+  });
+}
+
 
   private startMusic() {
     if (this.bgMusic) {
