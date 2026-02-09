@@ -250,7 +250,7 @@ const centerX = baseW / 2;
       const baseScale = 0.5 + (0.5 * egg.t);
 
         // hard clamp to avoid giant items
-        const scale = Math.min(baseScale * ITEM_SCALE_MULTIPLIER, 0.20);
+        const scale = Math.min(baseScale * ITEM_SCALE_MULTIPLIER, 0.15);
         egg.sprite.setScale(scale);
 
 
