@@ -248,7 +248,9 @@ const centerX = baseW / 2;
       
       // Scale based on distance for pseudo-depth, massively scaled up
       const baseScale = 0.5 + (0.5 * egg.t);
-      egg.sprite.setScale(baseScale * ITEM_SCALE_MULTIPLIER);
+      const s = Math.min(baseScale * ITEM_SCALE_MULTIPLIER, 0.5); // ✅ hard cap (max size)
+      egg.sprite.setScale(s);
+
 
       if (egg.t > 0.9) {
           egg.sprite.setTint(0xff0000); 
