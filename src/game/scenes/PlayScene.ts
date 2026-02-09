@@ -11,6 +11,9 @@ import { EggMovementSystem } from '../systems/EggMovement';
 import { BoostsSystem } from '../systems/Boosts';
 // GDX: toggle ramp visual visibility (geometry always active)
 const VISIBLE_RAMPS = false;
+// GDX: Visual-only поднятие дракона (НЕ меняет рампы/спавн/механику)
+// Отрицательное значение = визуально выше. Регулируй здесь.
+const DRAGON_VISUAL_OFFSET_Y = -16;
 
 export class PlayScene extends Phaser.Scene {
   private profile!: PlayerProfile;
@@ -150,6 +153,11 @@ private createDragon() {
     .sprite(0, 0, ASSETS.IMAGES.DRAGON, 'f_0_0')
     .setOrigin(0.5, 0.75);
 
+  // GDX: Visual-only offset (поднимаем ВНУТРИ контейнера)
+  // Важно: позиция контейнера остаётся “логической” (catch position), мы сдвигаем только визуал.
+  this.dragonSprite.setY(DRAGON_VISUAL_OFFSET_Y);
+  this.magnetGlow.setY(DRAGON_VISUAL_OFFSET_Y);
+
   // Контейнер, чтобы мы могли скейлить/флипать всё разом (sprite + glow)
   this.dragonContainer = (this as any).add.container(0, 0, [
     this.magnetGlow,
@@ -161,12 +169,14 @@ private createDragon() {
   // Создаём анимации 1 раз
   this.ensureDragonAnims();
 
-  // По умолчанию — лёгкий “idle” (можно оставить только hop, если хочешь)
+  // По умолчанию — лёгкий “idle”
   this.dragonSprite.play('dragon_idle');
   this.dragonSprite.setFrame('f_0_0');
-  // Позиционируем по текущему lane
+
+  // Позиционируем по текущему lane (логическая точка ловли)
   this.updateDragonPos();
 }
+
 private ensureDragonAnims() {
   // чтобы не создавать анимации повторно
   if ((this as any).anims.exists('dragon_hop')) return;
@@ -654,15 +664,22 @@ private showDifficultyToast(hard: boolean) {
     this.updateDragonHighlights(time);
     
     let dragonBounds = this.dragonContainer.getBounds();
-    
-    // Legacy visual fix, unrelated to logic logic
-    if (this.profile.skins.tailTier >= 3) {
-        const expansion = 300; 
-        dragonBounds.y -= expansion / 2;
-        dragonBounds.height += expansion;
-    }
-    
-    this.eggs.update(delta, dragonBounds, this.dragonLane);
+
+// GDX: Компенсация визуального сдвига, чтобы хитбокс/ловля остались как раньше.
+// Мы подняли визуал внутри контейнера, значит bounds тоже “уехал” вверх.
+// Возвращаем bounds обратно (в логическую точку).
+const visualOffsetWorld = DRAGON_VISUAL_OFFSET_Y * Math.abs(this.dragonContainer.scaleY || 1);
+dragonBounds.y -= visualOffsetWorld;
+
+// Legacy visual fix, unrelated to logic logic
+if (this.profile.skins.tailTier >= 3) {
+  const expansion = 300;
+  dragonBounds.y -= expansion / 2;
+  dragonBounds.height += expansion;
+}
+
+this.eggs.update(delta, dragonBounds, this.dragonLane);
+
     
     this.updateTimer(delta);
     
