@@ -444,15 +444,23 @@ canvas {
     .right-top { top: 2px; right: 2px; }
 
     /* Lower bottom catchers a bit more (and respect safe-area) */
-    .left-bot  { bottom: calc(1.5vh + env(safe-area-inset-bottom, 0px) + 2px); left: 2px; }
-    .right-bot { bottom: calc(1.5vh + env(safe-area-inset-bottom, 0px) + 2px); right: 2px; }
+      .left-bot  { bottom: calc(0.8vh + env(safe-area-inset-bottom, 0px)); left: 2px; }
+    .right-bot { bottom: calc(0.8vh + env(safe-area-inset-bottom, 0px)); right: 2px; }
+
 
     /* Boosts: move further left and slightly adjust vertical center to sit "between paws" */
-    .boost-stack {
+      .boost-stack {
     gap: 4px;
-    right: 18px;
+
+    /* ещё левее */
+    right: 26px;
+
+    /* чуть выше */
     top: 50%;
-    transform: translateY(-50%) translateY(6px);
+    transform: translateY(-50%) translateY(-2px);
+
+    /* визуально компактнее */
+    scale: 0.9;
   }
   
   .boost-btn {
