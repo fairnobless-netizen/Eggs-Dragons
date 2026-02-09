@@ -406,16 +406,8 @@ canvas {
     overflow: hidden;
   }
 
-  .game-screen-frame::after {
-    content: '';
-    position: absolute;
-    inset: -2px;
-    border: 2px solid rgba(255,255,255,0.15);
-    border-radius: 12px;
-    pointer-events: none;
-    z-index: 20;
-  }
-
+    /* (disabled) thin debug border - replaced by stone frame layer */
+  .game-screen-frame::after { content: none; }
 
   .ui-square-btn {
     width: 26px;
