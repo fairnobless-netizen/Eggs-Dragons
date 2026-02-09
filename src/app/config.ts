@@ -145,37 +145,44 @@ export const EGG_TYPES = {
   },
 
   BOMB: {
-    asset: ASSETS.IMAGES.EGG_BOMB,
-    chance: 0.10,
-    penalty: -1,
-    isMissable: false,
-    radius: 12,
-  },
+  asset: ASSETS.IMAGES.EGG_BOMB,
+  chance: 0.10,
+  score: 0,          // ✅ важно для TS/PlayScene
+  penalty: -1,
+  isMissable: false,
+  radius: 12,
+},
+
 
   SCALE: {
-    asset: ASSETS.IMAGES.EGG_SCALE,
-    chance: 0.05,
-    scale: 1,
-    isMissable: false,
-    radius: 12,
-  },
+  asset: ASSETS.IMAGES.EGG_SCALE,
+  chance: 0.05,
+  score: 0,          // ✅ важно для TS/PlayScene
+  scale: 1,
+  isMissable: false,
+  radius: 12,
+},
+
 
   // ⚠️ оставляй ТОЛЬКО если реально используешь в геймплее
   DIAMOND: {
-    asset: ASSETS.IMAGES.EGG_DIAMOND,
-    chance: 0.03,
-    token: 1,
-    isMissable: false,
-    radius: 15,
-  },
+  asset: ASSETS.IMAGES.EGG_DIAMOND,
+  chance: 0.03,
+  score: 0,          // ✅ важно для TS/PlayScene
+  token: 1,
+  isMissable: false,
+  radius: 15,
+},
+
 
   STAR: {
-    asset: ASSETS.IMAGES.EGG_STAR,
-    chance: 0.02,
-    star: 1,
-    isMissable: false,
-    radius: 15,
-  },
+  asset: ASSETS.IMAGES.EGG_STAR,
+  chance: 0.02,
+  score: 0,          // ✅ важно для TS/PlayScene
+  star: 1,
+  isMissable: false,
+  radius: 15,
+},
 } as const;
 
 export const STORE_PRICES = {
