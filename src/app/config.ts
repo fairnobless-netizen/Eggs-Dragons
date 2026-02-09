@@ -120,13 +120,15 @@ export const EGG_TYPES = {
     radius: 14,
   },
 
-  BLUE: {
+    BLUE: {
     asset: ASSETS.IMAGES.EGG_BLUE,
     chance: 0.15,
     score: 15,
+    star: 1, // ✅ Blue Eggs = основная валюта (внутри профиля это profile.stars)
     isMissable: true,
     radius: 14,
   },
+
 
   MITHRIL: { // green
     asset: ASSETS.IMAGES.EGG_MITHRIL,
