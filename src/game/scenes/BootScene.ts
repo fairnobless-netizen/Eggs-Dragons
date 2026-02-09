@@ -31,26 +31,21 @@ export class BootScene extends Phaser.Scene {
     (this as any).load.image(`stage_${i}`, `lvls/stage_${i}.png`);
     }
 
-// Eggs (PNG from public/game/ui/eggs)
-(this as any).load.image(ASSETS.IMAGES.EGG_WHITE,  'ui/eggs/egg_white.png');
-(this as any).load.image(ASSETS.IMAGES.EGG_GOLDEN, 'ui/eggs/egg_gold.png');
+// Eggs (PNG from public/game/eggs)  ✅ source of truth
+(this as any).load.image(ASSETS.IMAGES.EGG_WHITE,  'eggs/egg_white.png');
+(this as any).load.image(ASSETS.IMAGES.EGG_GOLDEN, 'eggs/egg_gold.png');
 
-// ВАЖНО: раньше EGG_MITHRIL грузился как eggs/egg_mithril.png,
-// теперь это твой green-egg PNG:
-(this as any).load.image(ASSETS.IMAGES.EGG_MITHRIL, 'ui/eggs/egg_green.png');
+// Green egg (у тебя сейчас названо MITHRIL в ASSETS)
+(this as any).load.image(ASSETS.IMAGES.EGG_MITHRIL, 'eggs/egg_green.png');
 
-// ВАЖНО: раньше EGG_BOMB грузился как eggs/egg_bomb.png,
-// теперь это твой гранат/бомба PNG:
-(this as any).load.image(ASSETS.IMAGES.EGG_BOMB, 'ui/eggs/granate.png');
+// Bomb / grenade
+(this as any).load.image(ASSETS.IMAGES.EGG_BOMB, 'eggs/granate.png');
 
-// Scale лежит у тебя тоже в ui/eggs
-(this as any).load.image(ASSETS.IMAGES.EGG_SCALE, 'ui/eggs/scale.png');
+// Scale
+(this as any).load.image(ASSETS.IMAGES.EGG_SCALE, 'eggs/scale.png');
 
-// Дополнительно: BLUE (если в ASSETS есть ключ — ок, если нет, добавим позже)
-if ((ASSETS.IMAGES as any).EGG_BLUE) {
-  (this as any).load.image((ASSETS.IMAGES as any).EGG_BLUE, 'ui/eggs/egg_blue.png');
-}
-
+// Blue egg (нужно добавить ASSETS.IMAGES.EGG_BLUE в config, см. пункт 1.2)
+(this as any).load.image(ASSETS.IMAGES.EGG_BLUE, 'eggs/egg_blue.png');
 
     // Items
     (this as any).load.image(ASSETS.IMAGES.EGG_DIAMOND, 'items/diamond.png');

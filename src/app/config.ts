@@ -94,27 +94,89 @@ export const ASSETS = {
   IMAGES: {
     DRAGON: 'dragon',
     LANE: 'lane',
+
+    // Eggs / items (texture keys)
     EGG_WHITE: 'egg_white',
-    EGG_MITHRIL: 'egg_mithril', // New Asset
+    EGG_BLUE: 'egg_blue',        // ✅ ДОБАВИЛИ
+    EGG_MITHRIL: 'egg_mithril',  // (у тебя это green)
     EGG_GOLDEN: 'egg_gold',
     EGG_BOMB: 'egg_bomb',
+    EGG_SCALE: 'egg_scale',
+
+    // optional items (если реально используешь)
     EGG_DIAMOND: 'egg_diamond',
     EGG_STAR: 'egg_star',
-    EGG_SCALE: 'egg_scale',
-    BG: 'background'
-  }
-};
 
-// Updated EGG_TYPES with MITHRIL and new scores
+    BG: 'background',
+  }
+} as const;
+
 export const EGG_TYPES = {
-  WHITE: { score: 10, chance: 0.45, color: 0xffffff, asset: ASSETS.IMAGES.EGG_WHITE, isMissable: true, radius: 14 },
-  MITHRIL: { score: 20, chance: 0.20, color: 0x3bd66a, asset: ASSETS.IMAGES.EGG_MITHRIL, isMissable: true, radius: 14 },
-  GOLDEN: { score: 30, chance: 0.10, color: 0xffd700, asset: ASSETS.IMAGES.EGG_GOLDEN, isMissable: true, radius: 14 },
-  BOMB: { score: 0, chance: 0.10, color: 0x333333, penalty: -1, asset: ASSETS.IMAGES.EGG_BOMB, isMissable: false, radius: 12 },
-  DIAMOND: { score: 100, chance: 0.05, color: 0x00ffff, token: 1, asset: ASSETS.IMAGES.EGG_DIAMOND, isMissable: false, radius: 15 },
-  STAR: { score: 50, chance: 0.05, color: 0xfacc15, star: 1, asset: ASSETS.IMAGES.EGG_STAR, isMissable: false, radius: 15 },
-  SCALE: { score: 20, chance: 0.05, color: 0x4ade80, scale: 1, asset: ASSETS.IMAGES.EGG_SCALE, isMissable: false, radius: 12 },
-};
+  WHITE: {
+    asset: ASSETS.IMAGES.EGG_WHITE,
+    chance: 0.45,
+    score: 10,
+    isMissable: true,
+    radius: 14,
+  },
+
+  BLUE: {
+    asset: ASSETS.IMAGES.EGG_BLUE,
+    chance: 0.15,
+    score: 15,
+    isMissable: true,
+    radius: 14,
+  },
+
+  MITHRIL: { // green
+    asset: ASSETS.IMAGES.EGG_MITHRIL,
+    chance: 0.20,
+    score: 20,
+    isMissable: true,
+    radius: 14,
+  },
+
+  GOLDEN: {
+    asset: ASSETS.IMAGES.EGG_GOLDEN,
+    chance: 0.10,
+    score: 30,
+    isMissable: true,
+    radius: 14,
+  },
+
+  BOMB: {
+    asset: ASSETS.IMAGES.EGG_BOMB,
+    chance: 0.10,
+    penalty: -1,
+    isMissable: false,
+    radius: 12,
+  },
+
+  SCALE: {
+    asset: ASSETS.IMAGES.EGG_SCALE,
+    chance: 0.05,
+    scale: 1,
+    isMissable: false,
+    radius: 12,
+  },
+
+  // ⚠️ оставляй ТОЛЬКО если реально используешь в геймплее
+  DIAMOND: {
+    asset: ASSETS.IMAGES.EGG_DIAMOND,
+    chance: 0.03,
+    token: 1,
+    isMissable: false,
+    radius: 15,
+  },
+
+  STAR: {
+    asset: ASSETS.IMAGES.EGG_STAR,
+    chance: 0.02,
+    star: 1,
+    isMissable: false,
+    radius: 15,
+  },
+} as const;
 
 export const STORE_PRICES = {
   // Phase 1: Diamond Eggs sold for Telegram Stars (XTR)
