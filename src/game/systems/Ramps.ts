@@ -47,7 +47,7 @@ const topAngleDeg = 12;      // верхние рампы чуть положе
 const bottomAngleDeg = 10;   // нижние рампы ещё положе
 
 // "чуточку ниже кантика" (общий оффсет)
-const verticalOffset = 8;
+const verticalOffset = 28;
 
 // Верхние рампы поднять выше (увеличь, если надо ещё выше)
 const topLiftPx = 10;
