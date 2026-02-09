@@ -50,7 +50,7 @@ export class BootScene extends Phaser.Scene {
     // Items
     (this as any).load.image(ASSETS.IMAGES.EGG_DIAMOND, 'items/diamond.png');
     (this as any).load.image(ASSETS.IMAGES.EGG_STAR, 'items/star.png');
-    (this as any).load.image(ASSETS.IMAGES.EGG_SCALE, 'items/scale.png');
+    
 
     // VFX
     (this as any).load.image('egg_splat', 'vfx/splat.png');

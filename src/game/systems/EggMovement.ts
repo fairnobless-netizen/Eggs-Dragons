@@ -258,21 +258,21 @@ const centerX = baseW / 2;
   }
 
   private createSplat(x: number, y: number, type: string) {
-    const splat = this.scene.add.sprite(x, y + 10, 'egg_splat');
-    // Scale splat to match new item size roughly
-    splat.setDepth(10).setScale(0.5 * ITEM_SCALE_MULTIPLIER);
-    const typeCfg = EGG_TYPES[type as keyof typeof EGG_TYPES];
-    if (typeCfg?.color) splat.setTint(typeCfg.color);
+  const splat = this.scene.add.sprite(x, y + 10, 'egg_splat');
+  // Scale splat to match new item size roughly
+  splat.setDepth(10).setScale(0.5 * ITEM_SCALE_MULTIPLIER);
 
-    this.scene.tweens.add({
-      targets: splat,
-      scaleX: 1.2 * ITEM_SCALE_MULTIPLIER,
-      scaleY: 0.8 * ITEM_SCALE_MULTIPLIER,
-      alpha: 0,
-      duration: 1500,
-      onComplete: () => splat.destroy()
-    });
-  }
+  // ✅ No tint/color logic — PNG-only visuals
+
+  this.scene.tweens.add({
+    targets: splat,
+    scaleX: 1.2 * ITEM_SCALE_MULTIPLIER,
+    scaleY: 0.8 * ITEM_SCALE_MULTIPLIER,
+    alpha: 0,
+    duration: 1500,
+    onComplete: () => splat.destroy()
+  });
+}
 
   removeEgg(egg: any) {
     const idx = this.eggs.indexOf(egg);
