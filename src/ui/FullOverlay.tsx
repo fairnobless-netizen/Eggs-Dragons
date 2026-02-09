@@ -405,18 +405,18 @@ useLayoutEffect(() => {
 
     // GDX: Telegram overlay-safe only in FULL mode
     // GDX: more shift for Telegram overlay (noticeable)
-transform: isMobile ? 'translateX(110px) scale(0.85)' : 'none',
+    transform: isMobile ? 'translateX(110px) scale(0.85)' : 'none',
     transformOrigin: 'left top',
-  }}
->
-  <div
-    style={{
+     }}
+    >
+      <div
+      style={{
       fontSize: isMobile ? '20px' : '32px',
       color: '#ef4444',
       textShadow: '0 2px 4px rgba(0,0,0,0.8)',
-    }}
-  >
-    {'❤️'.repeat(lives)}
+     }}
+     >
+        {'❤️'.repeat(lives)}
   </div>
 </div>
 
