@@ -336,53 +336,7 @@ canvas {
 /* MOBILE LANDSCAPE RESPONSIVE OVERRIDES     */
 /* ========================================= */
 @media (max-width: 900px) and (orientation: landscape) and (pointer: coarse) {
-    /* === Normal Mobile: stone frame behind UI buttons, above game world === */
-
-  .game-screen-frame {
-    position: relative;
-    overflow: visible; /* важно: чтобы рамка могла перекрывать "синее поле" */
-  }
-
-  /* мир/канвас должен быть ниже рамки */
-  .game-viewport {
-    position: relative;
-    z-index: 1;
-  }
-
-  /* рамка поверх мира, но под кнопками */
-  .game-screen-frame::after {
-    content: "";
-    position: absolute;
-
-    /* покрываем весь контейнер, включая нижнюю "синюю" зону */
-    left: -6px;
-    right: -6px;
-    top: -6px;
-
-    /* ключевой момент: растягиваем вниз сильнее, чтобы закрыть пустую синюю полосу */
-    bottom: -90px;
-
-    background-image: url("/game/ui/layer/top_ui_stones.png");
-    background-repeat: no-repeat;
-    background-position: center;
-    background-size: 100% 100%;
-
-    pointer-events: none;
-    z-index: 2;
-  }
-
-  /* все кнопки/иконки должны быть выше рамки */
-  .hud-layer,
-  .bottom-bar,
-  .boost-stack,
-  .left-top,
-  .left-bot,
-  .right-top,
-  .right-bot {
-    position: relative;
-    z-index: 3;
-  }
-
+  
   /* UI: Root Container matches viewport */
   .device-shell {
     width: 100vw;
@@ -462,12 +416,6 @@ canvas {
     z-index: 20;
   }
 
-  /* канвас всегда строго внутри рамки */
-  .game-screen-frame canvas {
-    width: 100% !important;
-    height: 100% !important;
-    display: block;
-  }
 
   .ui-square-btn {
     width: 26px;
