@@ -16,6 +16,9 @@ export class Dragon extends Phaser.GameObjects.Sprite {
     // ~10% меньше чем было (было 1.2)
     this.setScale(1.08);
 
+    // 🔧 VISUAL OFFSET: dragon sits higher on the rock
+    this.setOrigin(0.5, 0.75);
+
     // Initial pose
     this.setLane(RampPos.LEFT_TOP);
   }
