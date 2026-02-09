@@ -15,7 +15,7 @@ const EGG_RADIUS_AVG = 15;      // Approximate visual radius of egg
 const SURFACE_OFFSET = RAMP_THICKNESS_HALF + EGG_RADIUS_AVG; // Total offset from centerline
 
 // Scaling Factor for all items (2.5x larger)
-const ITEM_SCALE_MULTIPLIER = 2.5;
+const ITEM_SCALE_MULTIPLIER = 0.5;
 
 export class EggMovementSystem {
   private eggs: any[] = [];
@@ -248,8 +248,10 @@ const centerX = baseW / 2;
       
       // Scale based on distance for pseudo-depth, massively scaled up
       const baseScale = 0.5 + (0.5 * egg.t);
-      const s = Math.min(baseScale * ITEM_SCALE_MULTIPLIER, 0.5); // ✅ hard cap (max size)
-      egg.sprite.setScale(s);
+
+        // hard clamp to avoid giant items
+        const scale = Math.min(baseScale * ITEM_SCALE_MULTIPLIER, 0.25);
+        egg.sprite.setScale(scale);
 
 
       if (egg.t > 0.9) {
