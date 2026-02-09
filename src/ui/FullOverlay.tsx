@@ -404,7 +404,7 @@ useLayoutEffect(() => {
     alignItems: isMobile ? 'center' : 'flex-start',
 
     // GDX: Telegram overlay-safe only in FULL mode
-    transform: isMobile ? 'translateX(56px) scale(0.85)' : 'none',
+    transform: isMobile ? 'translateX(96px) scale(0.85)' : 'none',
     transformOrigin: 'left top',
   }}
 >
