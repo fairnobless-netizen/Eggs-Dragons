@@ -178,12 +178,16 @@ export const DeviceShell: React.FC<{
         👥
       </button>
 
-      <div className="top-bar">
-        <button className="ui-square-btn" onClick={() => { soundService.playButtonClick(); gameBridge.emit('OPEN_RANKING'); }} title={t.ranking}>🏆</button>
-        <button className="ui-square-btn" onClick={() => { soundService.playButtonClick(); gameBridge.emit('OPEN_STORE'); }} title={t.store}>🛒</button>
-        <button className="ui-square-btn" onClick={() => { soundService.playButtonClick(); gameBridge.emit('OPEN_SETTINGS'); }} title={t.settings}>⚙️</button>
-        <button className="ui-square-btn" onClick={handleRestart} title={t.restart}>🔄</button>
-      </div>
+            {/* Desktop: keep top-bar. Mobile: move these icons to bottom-bar */}
+      {!isMobile && (
+        <div className="top-bar">
+          <button className="ui-square-btn" onClick={() => { soundService.playButtonClick(); gameBridge.emit('OPEN_RANKING'); }} title={t.ranking}>🏆</button>
+          <button className="ui-square-btn" onClick={() => { soundService.playButtonClick(); gameBridge.emit('OPEN_STORE'); }} title={t.store}>🛒</button>
+          <button className="ui-square-btn" onClick={() => { soundService.playButtonClick(); gameBridge.emit('OPEN_SETTINGS'); }} title={t.settings}>⚙️</button>
+          <button className="ui-square-btn" onClick={handleRestart} title={t.restart}>🔄</button>
+        </div>
+      )}
+
 
       <div className="main-area">
         <div className="game-screen-frame">
@@ -296,15 +300,26 @@ export const DeviceShell: React.FC<{
         </div>
       </div>
 
-      <div className="bottom-bar">
-        <button 
-          className="ui-square-btn" 
+            <div className="bottom-bar">
+        {/* Mobile Normal: add former top-bar icons into existing bottom row */}
+        {isMobile && (
+          <>
+            <button className="ui-square-btn" onClick={() => { soundService.playButtonClick(); gameBridge.emit('OPEN_RANKING'); }} title={t.ranking}>🏆</button>
+            <button className="ui-square-btn" onClick={() => { soundService.playButtonClick(); gameBridge.emit('OPEN_STORE'); }} title={t.store}>🛒</button>
+            <button className="ui-square-btn" onClick={() => { soundService.playButtonClick(); gameBridge.emit('OPEN_SETTINGS'); }} title={t.settings}>⚙️</button>
+            <button className="ui-square-btn" onClick={handleRestart} title={t.restart}>🔄</button>
+          </>
+        )}
+
+        {/* Existing bottom controls */}
+        <button
+          className="ui-square-btn"
           onClick={() => { soundService.playButtonClick(); setIsHard(!isHard); gameBridge.toggleHard(!isHard); }}
           title={isHard ? "Hard Mode" : "Easy Mode"}
         >
           {isHard ? '🔥' : '🌿'}
         </button>
-        
+
         <button className="ui-square-btn" onClick={() => { soundService.playButtonClick(); toggleFull(); }} title={t.exit_full}>
           ⛶
         </button>
@@ -313,6 +328,7 @@ export const DeviceShell: React.FC<{
           {paused ? '▶' : '⏸'}
         </button>
       </div>
+
     </div>
   );
 };

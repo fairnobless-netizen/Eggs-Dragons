@@ -439,14 +439,22 @@ canvas {
     height: 95px;
   }
  
-  .left-top { top: 2px; left: 2px; }
-  .left-bot { bottom: 8vh; left: 2px; }
-  .right-top { top: 2px; right: 2px; }
-  .right-bot { bottom: 8vh; right: 2px; }
+    .left-top { top: 2px; left: 2px; }
 
+  /* Normal Mobile: lower bottom catchers (≈ “~2 cm” visually) */
+  .left-bot { bottom: 3vh; left: 2px; }
+
+  .right-top { top: 2px; right: 2px; }
+
+  /* Normal Mobile: lower bottom catchers (≈ “~2 cm” visually) */
+  .right-bot { bottom: 3vh; right: 2px; }
+
+  /* Boosts: move away from the right edge and visually sit closer to paw zone */
   .boost-stack {
     gap: 4px;
-    right: 2px;
+    right: 14px;
+  
+
   }
   
   .boost-btn {
