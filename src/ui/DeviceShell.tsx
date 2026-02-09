@@ -191,7 +191,7 @@ export const DeviceShell: React.FC<{
         </div>
       )}
       
-      <img className="stone-frame" src="/ui/layer/top_ui_stones.png" alt="" draggable={false} /> 
+     
 
 
       <div className="main-area">
