@@ -155,7 +155,6 @@ canvas {
     -webkit-tap-highlight-color: transparent;
 }
 
-
     .red-btn:active {
         transform: translateY(2px) scale(0.96);
         filter: brightness(0.9);

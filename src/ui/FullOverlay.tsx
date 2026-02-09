@@ -404,7 +404,7 @@ useLayoutEffect(() => {
     alignItems: isMobile ? 'center' : 'flex-start',
 
     // GDX: Telegram overlay-safe only in FULL mode
-    transform: isMobile ? 'translateX(96px) scale(0.85)' : 'none',
+    transform: isMobile ? 'translateX(115px) scale(0.85)' : 'none',
     transformOrigin: 'left top',
   }}
 >
@@ -431,7 +431,7 @@ useLayoutEffect(() => {
                 alignItems: 'center'
             }}>
               <div style={{ 
-                  fontSize: isMobile ? '28px' : '36px', 
+                  fontSize: isMobile ? '25px' : '36px', // GDX: ~10% smaller in Full mode on mobile
                   fontWeight: 900, 
                   color: '#facc15', 
                   textShadow: '0 2px 4px rgba(0,0,0,0.8)', 
@@ -441,7 +441,7 @@ useLayoutEffect(() => {
                 {score.toString().padStart(5, '0')}
               </div>
               <div style={{ 
-                  fontSize: isMobile ? '20px' : '24px', 
+                  fontSize: isMobile ? '18px' : '24px', // GDX: ~10% smaller in Full mode on mobile
                   fontWeight: 700, 
                   color: getTimerColor(), 
                   textShadow: '0 2px 4px rgba(0,0,0,0.8)', 
@@ -459,7 +459,6 @@ useLayoutEffect(() => {
               pointerEvents: 'auto', 
               alignItems: 'center',
             }}>
-              
               {!isMobile && (
                   <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '20px' }}>
                       <div style={{ fontSize: '24px', color: '#facc15', textShadow: '0 2px 4px rgba(0,0,0,0.8)', fontWeight: 900 }}>💎 {stars}</div>
