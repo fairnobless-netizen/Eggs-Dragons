@@ -172,7 +172,7 @@ export const StoreModal: React.FC<StoreModalProps> = ({ isOpen, onClose }) => {
 
     setConfirmModal({
       item: name,
-      cost: `${cost} 🐉`,
+      cost: `${cost} scales`,
       onConfirm: () => {
         const updatedProfile = { ...profile };
 
@@ -206,7 +206,7 @@ export const StoreModal: React.FC<StoreModalProps> = ({ isOpen, onClose }) => {
     soundService.playButtonClick();
     if (profile.stars >= 1000) {
       setConfirmModal({
-        item: '50 🐉',
+        item: '50 scales',
         cost: '1000 🥚', // Cost in Blue Eggs
         onConfirm: () => {
           const updated = StorageService.updateProfile({
@@ -229,6 +229,15 @@ export const StoreModal: React.FC<StoreModalProps> = ({ isOpen, onClose }) => {
 
   // Blue Eggs (main currency) icon (served from public/game/eggs)
   const BLUE_EGG_ICON_SRC = '/game/eggs/egg_blue.png';
+    const SCALE_ICON_SRC = '/game/eggs/scale.png';
+  const ScaleIcon = ({ size }: { size: string }) => (
+    <img
+      src={SCALE_ICON_SRC}
+      alt="Scale"
+      style={{ width: size, height: size, imageRendering: 'auto', display: 'block' }}
+    />
+  );
+
   const BlueEggIcon = ({ size }: { size: string }) => (
     <img
       src={BLUE_EGG_ICON_SRC}
@@ -329,7 +338,10 @@ export const StoreModal: React.FC<StoreModalProps> = ({ isOpen, onClose }) => {
                         fontSize: '10px'
                       }}
                     >
-                      {cost} 🐉 {isLocked ? `(${t.locked})` : ''}
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+  {cost} <ScaleIcon size={iconSize} /> {isLocked ? `(${t.locked})` : ''}
+</span>
+
                     </button>
                   )}
                 </div>
@@ -391,9 +403,9 @@ export const StoreModal: React.FC<StoreModalProps> = ({ isOpen, onClose }) => {
             <span style={{ fontWeight: 900, color: '#38bdf8', fontSize: textSize }}>{profile.stars}</span>
           </div>
           <div style={{ background: '#0f172a', padding: '4px 10px', borderRadius: 10, display: 'flex', alignItems: 'center', gap: 6, border: '1px solid #334155' }}>
-            <span style={{ fontSize: isMobileLandscape ? '14px' : '16px' }}>🐉</span>
-            <span style={{ fontWeight: 900, color: '#10b981', fontSize: textSize }}>{profile.scales}</span>
-          </div>
+  <ScaleIcon size={isMobileLandscape ? '16px' : '20px'} />
+  <span style={{ fontWeight: 900, color: '#10b981', fontSize: textSize }}>{profile.scales}</span>
+</div>
         </div>
 
         <div style={{ display: 'flex', borderBottom: '2px solid #334155', marginBottom: isMobileLandscape ? 8 : 20 }}>
@@ -497,7 +509,10 @@ export const StoreModal: React.FC<StoreModalProps> = ({ isOpen, onClose }) => {
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, marginBottom: 6 }}>
                   <span style={{ fontSize: textSize, fontWeight: 900 }}>1000 🥚</span>
                   <span style={{ fontSize: '14px' }}>➜</span>
-                  <span style={{ fontSize: textSize, fontWeight: 900, color: '#10b981' }}>50 🐉</span>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: textSize, fontWeight: 900, color: '#10b981' }}>
+  50 <ScaleIcon size={iconSize} />
+</span>
+
                 </div>
                 <button
                   onClick={handleExchange}
@@ -550,7 +565,10 @@ export const StoreModal: React.FC<StoreModalProps> = ({ isOpen, onClose }) => {
                           color: profile.scales >= STORE_PRICES.SKINS.IRON_BODY ? '#000' : '#94a3b8'
                         }}
                       >
-                        {STORE_PRICES.SKINS.IRON_BODY} 🐉
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+  {STORE_PRICES.SKINS.IRON_BODY} <ScaleIcon size={iconSize} />
+</span>
+
                       </button>
                     )}
                   </div>
@@ -579,7 +597,10 @@ export const StoreModal: React.FC<StoreModalProps> = ({ isOpen, onClose }) => {
                           color: profile.scales >= STORE_PRICES.SKINS.CRYSTAL_BODY ? '#000' : '#94a3b8'
                         }}
                       >
-                        {STORE_PRICES.SKINS.CRYSTAL_BODY} 🐉
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+  {STORE_PRICES.SKINS.CRYSTAL_BODY} <ScaleIcon size={iconSize} />
+</span>
+
                       </button>
                     )}
                   </div>
