@@ -384,6 +384,47 @@ canvas {
     align-items: center;
     justify-content: center;
   }
+    /* === Stone frame behind buttons, above the game world === */
+  .main-area {
+    position: absolute; /* уже есть у тебя, но оставляем как гарантию */
+  }
+
+  .main-area::before {
+    content: "";
+    position: absolute;
+    left: 50%;
+    top: 50%;
+
+    /* Берём ту же формулу ширины что и game-screen-frame */
+    width: min(96vw, calc((100vh - 28px - 30px) * 2));
+
+    /* Высота = ширина/2 (2:1) + добавка вниз, чтобы закрыть “синее пустое поле” */
+    height: calc(min(96vw, calc((100vh - 28px - 30px) * 2)) / 2 + 90px);
+
+    transform: translate(-50%, -50%) translateY(22px);
+
+    background-image: url("/game/ui/layer/top_ui_stones.png");
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: 100% 100%;
+
+    pointer-events: none;
+
+    /* Важно: выше мира, но ниже UI */
+    z-index: 12;
+  }
+
+  /* Мир (game-screen-frame + viewport) ниже рамки */
+  .game-screen-frame { z-index: 10; }
+
+  /* UI всегда выше рамки */
+  .hud-layer,
+  .bottom-bar,
+  .boost-stack,
+  .left-top, .left-bot, .right-top, .right-bot {
+    z-index: 50;
+  }
+
 
   .game-screen-frame {
     position: relative;
