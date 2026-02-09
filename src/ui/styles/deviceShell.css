@@ -441,20 +441,18 @@ canvas {
  
     .left-top { top: 2px; left: 2px; }
 
-  /* Normal Mobile: lower bottom catchers (≈ “~2 cm” visually) */
-  .left-bot { bottom: 3vh; left: 2px; }
+    .right-top { top: 2px; right: 2px; }
 
-  .right-top { top: 2px; right: 2px; }
+    /* Lower bottom catchers a bit more (and respect safe-area) */
+    .left-bot  { bottom: calc(1.5vh + env(safe-area-inset-bottom, 0px) + 2px); left: 2px; }
+    .right-bot { bottom: calc(1.5vh + env(safe-area-inset-bottom, 0px) + 2px); right: 2px; }
 
-  /* Normal Mobile: lower bottom catchers (≈ “~2 cm” visually) */
-  .right-bot { bottom: 3vh; right: 2px; }
-
-  /* Boosts: move away from the right edge and visually sit closer to paw zone */
-  .boost-stack {
+    /* Boosts: move further left and slightly adjust vertical center to sit "between paws" */
+    .boost-stack {
     gap: 4px;
-    right: 14px;
-  
-
+    right: 18px;
+    top: 50%;
+    transform: translateY(-50%) translateY(6px);
   }
   
   .boost-btn {

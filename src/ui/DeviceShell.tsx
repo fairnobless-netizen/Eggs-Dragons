@@ -151,32 +151,35 @@ export const DeviceShell: React.FC<{
       <button className="red-btn right-top" onPointerDown={() => gameBridge.setCatchPosition(RampPos.RIGHT_TOP)} />
       <button className="red-btn right-bot" onPointerDown={() => gameBridge.setCatchPosition(RampPos.RIGHT_BOT)} />
       
-      {/* // MP: multiplayer button safe positioning */}
-      <button 
-        onClick={() => { soundService.playButtonClick(); gameBridge.emit('OPEN_MULTIPLAYER'); }}
-        style={{ 
+            {/* MP: desktop-only floating button. Mobile: moved into bottom-bar */}
+      {!isMobile && (
+        <button
+          onClick={() => { soundService.playButtonClick(); gameBridge.emit('OPEN_MULTIPLAYER'); }}
+          style={{
             position: 'absolute',
-            left: isMobile ? '2px' : '20px', 
+            left: '20px',
             top: '50%',
             transform: 'translateY(-50%)',
-            width: isMobile ? '36px' : '56px',
-            height: isMobile ? '36px' : '56px',
+            width: '56px',
+            height: '56px',
             borderRadius: '12px',
             background: 'linear-gradient(135deg, #3b82f6, #2563eb)',
             border: '2px solid #93c5fd',
             boxShadow: '0 4px 0 #1e40af',
             color: '#fff',
-            fontSize: isMobile ? '18px' : '24px',
+            fontSize: '24px',
             zIndex: 90,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             cursor: 'pointer'
-        }}
-        title="Multiplayer"
-      >
-        👥
-      </button>
+          }}
+          title="Multiplayer"
+        >
+          👥
+        </button>
+      )}
+
 
             {/* Desktop: keep top-bar. Mobile: move these icons to bottom-bar */}
       {!isMobile && (
@@ -300,30 +303,43 @@ export const DeviceShell: React.FC<{
         </div>
       </div>
 
-            <div className="bottom-bar">
-        {/* Mobile Normal: add former top-bar icons into existing bottom row */}
-        {isMobile && (
-          <>
-            <button className="ui-square-btn" onClick={() => { soundService.playButtonClick(); gameBridge.emit('OPEN_RANKING'); }} title={t.ranking}>🏆</button>
-            <button className="ui-square-btn" onClick={() => { soundService.playButtonClick(); gameBridge.emit('OPEN_STORE'); }} title={t.store}>🛒</button>
-            <button className="ui-square-btn" onClick={() => { soundService.playButtonClick(); gameBridge.emit('OPEN_SETTINGS'); }} title={t.settings}>⚙️</button>
-            <button className="ui-square-btn" onClick={handleRestart} title={t.restart}>🔄</button>
-          </>
-        )}
-
-        {/* Existing bottom controls */}
-        <button
-          className="ui-square-btn"
+              <div className="bottom-bar">
+        {/* 1) Hard mode */}
+        <button 
+          className="ui-square-btn" 
           onClick={() => { soundService.playButtonClick(); setIsHard(!isHard); gameBridge.toggleHard(!isHard); }}
           title={isHard ? "Hard Mode" : "Easy Mode"}
         >
           {isHard ? '🔥' : '🌿'}
         </button>
 
+        {/* 2) Multiplayer (mobile moved here; desktop has floating button) */}
+        <button
+          className="ui-square-btn"
+          onClick={() => { soundService.playButtonClick(); gameBridge.emit('OPEN_MULTIPLAYER'); }}
+          title="Multiplayer"
+        >
+          👥
+        </button>
+
+        {/* 3) Leaderboard */}
+        <button className="ui-square-btn" onClick={() => { soundService.playButtonClick(); gameBridge.emit('OPEN_RANKING'); }} title={t.ranking}>🏆</button>
+
+        {/* 4) Store */}
+        <button className="ui-square-btn" onClick={() => { soundService.playButtonClick(); gameBridge.emit('OPEN_STORE'); }} title={t.store}>🛒</button>
+
+        {/* 5) Full view */}
         <button className="ui-square-btn" onClick={() => { soundService.playButtonClick(); toggleFull(); }} title={t.exit_full}>
           ⛶
         </button>
 
+        {/* 6) Settings */}
+        <button className="ui-square-btn" onClick={() => { soundService.playButtonClick(); gameBridge.emit('OPEN_SETTINGS'); }} title={t.settings}>⚙️</button>
+
+        {/* 7) Restart */}
+        <button className="ui-square-btn" onClick={handleRestart} title={t.restart}>🔄</button>
+
+        {/* 8) Pause */}
         <button className="ui-square-btn" onClick={() => { soundService.playButtonClick(); gameBridge.togglePause(!paused); }} title={paused ? t.resume : t.paused}>
           {paused ? '▶' : '⏸'}
         </button>
