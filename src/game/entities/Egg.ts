@@ -57,8 +57,6 @@ export class Egg extends Phaser.GameObjects.Sprite {
       case EggType.BLUE:
         this.setTexture(ASSETS.IMAGES.EGG_BLUE);
         break;
-
-
         // если ключа нет — упадём на WHITE
         this.setTexture(((ASSETS.IMAGES as any).EGG_BLUE) ?? ASSETS.IMAGES.EGG_WHITE);
         break;
