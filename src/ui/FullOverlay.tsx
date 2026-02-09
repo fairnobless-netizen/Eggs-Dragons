@@ -405,7 +405,7 @@ useLayoutEffect(() => {
 
     // GDX: Telegram overlay-safe only in FULL mode
     // GDX: more shift for Telegram overlay (noticeable)
-transform: isMobile ? 'translateX(150px) scale(0.85)' : 'none',
+transform: isMobile ? 'translateX(130px) scale(0.85)' : 'none',
     transformOrigin: 'left top',
   }}
 >
