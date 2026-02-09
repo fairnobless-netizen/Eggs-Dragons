@@ -399,7 +399,6 @@ canvas {
   .bottom-bar,
   .boost-stack,
   .left-top, .left-bot, .right-top, .right-bot {
-    position: relative;
     z-index: 50;
   }
 
