@@ -449,19 +449,20 @@ canvas {
 
 
     /* Boosts: move further left and slightly adjust vertical center to sit "between paws" */
-      .boost-stack {
+        .boost-stack {
     gap: 4px;
 
-    /* ещё левее */
-    right: 26px;
+    /* ещё на каплю левее */
+    right: 30px;
 
-    /* чуть выше */
+    /* ещё на каплю выше */
     top: 50%;
-    transform: translateY(-50%) translateY(-2px);
+    transform: translateY(-50%) translateY(-6px);
 
-    /* визуально компактнее */
+    /* размер оставляем как есть */
     scale: 0.9;
   }
+
   
   .boost-btn {
     width: 32px;
