@@ -239,11 +239,6 @@ canvas {
   align-items: flex-start; 
   z-index: 150; 
 }
-/* GDX: Telegram overlay-safe hearts (works regardless of media query) */
-.hud-layer.mobile-normal .hud-group-left {
-  transform: translateX(56px) scale(0.85);
-  transform-origin: left top;
-}
 
 .hud-item {
   background: rgba(0,0,0,0.7);

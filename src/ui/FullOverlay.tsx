@@ -396,15 +396,29 @@ useLayoutEffect(() => {
               pointerEvents: 'none'
           }}>
             {/* Left: Hearts */}
-            <div style={{ 
-              display: 'flex', 
-              flexDirection: isMobile ? 'row' : 'column', 
-              gap: isMobile ? '15px' : '5px', 
-              alignItems: isMobile ? 'center' : 'flex-start',
-              // Removed margin hacks, relying on container centering
-            }}>
-              <div style={{ fontSize: isMobile ? '20px' : '32px', color: '#ef4444', textShadow: '0 2px 4px rgba(0,0,0,0.8)' }}>{'❤️'.repeat(lives)}</div>
-            </div>
+<div
+  style={{
+    display: 'flex',
+    flexDirection: isMobile ? 'row' : 'column',
+    gap: isMobile ? '15px' : '5px',
+    alignItems: isMobile ? 'center' : 'flex-start',
+
+    // GDX: Telegram overlay-safe only in FULL mode
+    transform: isMobile ? 'translateX(56px) scale(0.85)' : 'none',
+    transformOrigin: 'left top',
+  }}
+>
+  <div
+    style={{
+      fontSize: isMobile ? '20px' : '32px',
+      color: '#ef4444',
+      textShadow: '0 2px 4px rgba(0,0,0,0.8)',
+    }}
+  >
+    {'❤️'.repeat(lives)}
+  </div>
+</div>
+
 
             {/* Center: Score & Timer */}
             <div style={{ 
