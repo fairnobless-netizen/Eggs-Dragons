@@ -81,7 +81,10 @@ export class PlayScene extends Phaser.Scene {
 
 
   this.ramps = new RampsSystem(this);
-  this.eggs = new EggMovementSystem(this, this.ramps);
+this.registry.set('ramps', this.ramps);
+
+this.eggs = new EggMovementSystem(this, this.ramps);
+
   this.boosts = new BoostsSystem(this);
 
   this.laneVisuals = (this as any).add.group();

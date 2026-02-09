@@ -34,7 +34,7 @@ export class Egg extends Phaser.GameObjects.Sprite {
     this.setType(EggType.WHITE); // дефолт
 
     this.updatePosition();
-    (this as any).setTint(0x000000); // LCD style silhouette initially
+    
   }
     setType(type: EggType) {
     this.type = type;
@@ -62,6 +62,8 @@ export class Egg extends Phaser.GameObjects.Sprite {
         this.setTexture(ASSETS.IMAGES.EGG_WHITE);
         break;
     }
+     // ⬇️ ВОТ ЗДЕСЬ
+  this.rotationSpeed = Phaser.Math.FloatBetween(0.004, 0.009);
   }
 
   // Method for Spawner compatibility

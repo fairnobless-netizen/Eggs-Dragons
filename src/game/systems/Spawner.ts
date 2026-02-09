@@ -1,8 +1,9 @@
-
 import Phaser from 'phaser';
 import { Egg, EggType } from '../entities/Egg';
 import { DifficultySystem } from './Difficulty';
+import { RampsSystem } from './Ramps';
 import { GAME_CONFIG } from '../../app/config';
+
 
 export class Spawner {
   private scene: Phaser.Scene;
@@ -42,7 +43,8 @@ export class Spawner {
   // else WHITE
 
   // Create egg with dummy ramps/duration to satisfy constructor, then activate
-  const egg = new Egg(this.scene, null as any, lane, 1000);
+  const ramps = this.scene.registry.get('ramps') as RampsSystem;
+const egg = new Egg(this.scene, ramps, lane, 1000);
 
   // IMPORTANT: use new EggType directly
   egg.setType(type);
