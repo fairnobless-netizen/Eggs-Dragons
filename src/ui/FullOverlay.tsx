@@ -471,7 +471,7 @@ useLayoutEffect(() => {
                 <button className="exit-btn" style={{ background: '#f87171', position: 'static', padding: 0, width: isMobile ? '30px' : '40px', height: isMobile ? '30px' : '40px', fontSize: isMobile ? '18px' : '22px', display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={handleRestart} title={t.restart}>🔄</button>
                 
                 <button className="exit-btn" style={{ position: 'static', padding: 0, width: isMobile ? '30px' : '40px', height: isMobile ? '30px' : '40px', fontSize: isMobile ? '18px' : '22px', display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => { soundService.playButtonClick(); toggleFull(); }} title={t.exit_full}>
-                    🗗
+                ⛶
                 </button>
               </div>
             </div>
