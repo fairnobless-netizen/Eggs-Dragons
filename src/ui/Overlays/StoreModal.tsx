@@ -555,6 +555,7 @@ export const StoreModal: React.FC<StoreModalProps> = ({ isOpen, onClose }) => {
                     )}
                   </div>
 
+
                   {/* Crystal Body */}
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#1e293b', padding: '8px', borderRadius: 8 }}>
                     <div style={{ display: 'flex', flexDirection: 'column' }}>

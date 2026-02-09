@@ -122,8 +122,8 @@ export const EGG_TYPES = {
 
     BLUE: {
     asset: ASSETS.IMAGES.EGG_BLUE,
-    chance: 0.15,
-    score: 15,
+    chance: 0.04,
+    score: 50,
     star: 1, // ✅ Blue Eggs = основная валюта (внутри профиля это profile.stars)
     isMissable: true,
     radius: 14,
@@ -158,7 +158,7 @@ export const EGG_TYPES = {
 
   SCALE: {
   asset: ASSETS.IMAGES.EGG_SCALE,
-  chance: 0.05,
+  chance: 0.02,
   score: 0,          // ✅ важно для TS/PlayScene
   scale: 1,
   isMissable: false,
@@ -169,7 +169,7 @@ export const EGG_TYPES = {
   // ⚠️ оставляй ТОЛЬКО если реально используешь в геймплее
   DIAMOND: {
   asset: ASSETS.IMAGES.EGG_DIAMOND,
-  chance: 0.03,
+  chance: 0.00,
   score: 0,          // ✅ важно для TS/PlayScene
   token: 1,
   isMissable: false,
@@ -179,13 +179,14 @@ export const EGG_TYPES = {
 
   STAR: {
   asset: ASSETS.IMAGES.EGG_STAR,
-  chance: 0.02,
+  chance: 0.00,
   score: 0,          // ✅ важно для TS/PlayScene
   star: 1,
   isMissable: false,
   radius: 15,
 },
 } as const;
+
 
 export const STORE_PRICES = {
   // Phase 1: Diamond Eggs sold for Telegram Stars (XTR)
